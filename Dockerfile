@@ -18,7 +18,7 @@ RUN apk update && \
     cp /tmp/libubox/*.so /tmp/dst/lib/ && cp /tmp/libubox/lua/*.so /tmp/dst/lua/ && \
     cp /tmp/ustream-ssl/*.so /tmp/dst/lib/ &&\
     cp /tmp/uci/*.so /tmp/dst/lib/ && cp /tmp/uci/lua/*.so /tmp/dst/lua/ && cp /tmp/uci/uci /tmp/dst/bin/ && \
-    cp /tmp/uhttpd/*.so /tmp/dst/lib/ && cp /tmp/uhttpd/lua/*.so /tmp/dst/lua/ && cp /tmp/uhttpd/uhttpd /tmp/dst/bin/
+    cp /tmp/uhttpd/*.so /tmp/dst/lib/ && cp /tmp/uhttpd/uhttpd /tmp/dst/bin/
 
 FROM alpine
 
