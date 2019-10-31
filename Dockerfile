@@ -30,7 +30,7 @@ RUN apk update && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5
 
 COPY init.sh /
-COPY luci $ORIGINAL_DIR
+COPY root $ORIGINAL_DIR
 COPY --from=compile_stage /tmp/dst/lib $ORIGINAL_DIR/usr/lib/
 COPY --from=compile_stage /tmp/dst/lua $ORIGINAL_DIR/usr/lib/lua/
 COPY --from=compile_stage /tmp/dst/bin $ORIGINAL_DIR/usr/sbin/
