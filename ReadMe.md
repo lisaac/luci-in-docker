@@ -33,5 +33,5 @@ docker run -dit \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --tmpfs /tmp:exec \
   --tmpfs /run \
-  lisaac/luci-in-docker /bin/sh
+  lisaac/luci /bin/sh
 ```
