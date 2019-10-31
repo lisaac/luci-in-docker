@@ -1,0 +1,214 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2011 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%
+	local fs = require "nixio.fs"
+	local ipc = require "luci.ip"
+	local util = require "luci.util"
+	local stat = require "luci.tools.status"
+	local ver = require "luci.version"
+
+	local sysinfo = nixio.sysinfo()
+
+	local boardinfo =  { }
+	local unameinfo = nixio.uname() or { }
+
+	local meminfo = {
+		total = sysinfo.totalram,
+		free = sysinfo.freeram,
+		buffered = sysinfo.bufferram,
+		shared = sysinfo.sharedram
+	}
+
+	local swapinfo = {
+		total = sysinfo.totalswap,
+		free = sysinfo.freeswap
+	}
+
+	if luci.http.formvalue("status") == "1" then
+
+		local rv = {
+			uptime     = sysinfo.uptime,
+			localtime  = os.date(),
+			loadavg    = sysinfo.loads,
+			memory     = meminfo,
+			swap       = swapinfo
+		}
+
+		luci.http.prepare_content("application/json")
+		luci.http.write_json(rv)
+
+		return
+	end
+-%>
+
+<%+header%>
+
+<script type="text/javascript">//<![CDATA[
+	function progressbar(v, m)
+	{
+		var vn = parseInt(v) || 0;
+		var mn = parseInt(m) || 100;
+		var pc = Math.floor((100 / mn) * vn);
+
+		return String.format(
+			'<div style="width:100%%; max-width:200px; position:relative; border:1px solid #999999">' +
+				'<div style="background-color:#CCCCCC; width:%d%%; height:15px">' +
+					'<div style="position:absolute; left:0; top:0; text-align:center; width:100%%; color:#000000">' +
+						'<small>%s / %s (%d%%)</small>' +
+					'</div>' +
+				'</div>' +
+			'</div>', pc, v, m, pc
+		);
+	}
+
+	function labelList(items, offset) {
+		var rv = [ ];
+
+		for (var i = offset || 0; i < items.length; i += 2) {
+			var label = items[i],
+			    value = items[i+1];
+
+			if (value === undefined || value === null)
+				continue;
+
+			if (label)
+				rv.push(E('strong', [label, ': ']));
+
+			rv.push(value, E('br'));
+		}
+
+		return rv;
+	}
+
+	function renderBox(title, active, childs) {
+		childs = childs || [];
+		childs.unshift(E('span', labelList(arguments, 3)));
+
+		return E('div', { class: 'ifacebox' }, [
+			E('div', { class: 'ifacebox-head center ' + (active ? 'active' : '') },
+				E('strong', title)),
+			E('div', { class: 'ifacebox-body left' }, childs)
+		]);
+	}
+
+	function renderBadge(icon, title) {
+		return E('span', { class: 'ifacebadge' }, [
+			E('img', { src: icon, title: title || '' }),
+			E('span', labelList(arguments, 2))
+		]);
+	}
+
+	XHR.poll(5, '<%=REQUEST_URI%>', { status: 1 },
+		function(x, info)
+		{
+			var e;
+
+			if (e = document.getElementById('localtime'))
+				e.innerHTML = info.localtime;
+
+			if (e = document.getElementById('uptime'))
+				e.innerHTML = String.format('%t', info.uptime);
+
+			if (e = document.getElementById('loadavg'))
+				e.innerHTML = String.format(
+					'%.02f, %.02f, %.02f',
+					info.loadavg[0],
+					info.loadavg[1],
+					info.loadavg[2]
+				);
+
+			if (e = document.getElementById('memtotal'))
+				e.innerHTML = progressbar(
+					((info.memory.free + info.memory.buffered) / 1024) + " <%:kB%>",
+					(info.memory.total / 1024) + " <%:kB%>"
+				);
+
+			if (e = document.getElementById('memfree'))
+				e.innerHTML = progressbar(
+					(info.memory.free / 1024) + " <%:kB%>",
+					(info.memory.total / 1024) + " <%:kB%>"
+				);
+
+			if (e = document.getElementById('membuff'))
+				e.innerHTML = progressbar(
+					(info.memory.buffered / 1024) + " <%:kB%>",
+					(info.memory.total / 1024) + " <%:kB%>"
+				);
+
+			if (e = document.getElementById('swaptotal'))
+				e.innerHTML = progressbar(
+					(info.swap.free / 1024) + " <%:kB%>",
+					(info.swap.total / 1024) + " <%:kB%>"
+				);
+
+			if (e = document.getElementById('swapfree'))
+				e.innerHTML = progressbar(
+					(info.swap.free / 1024) + " <%:kB%>",
+					(info.swap.total / 1024) + " <%:kB%>"
+				);
+
+			if (e = document.getElementById('conns'))
+				e.innerHTML = progressbar(info.conncount, info.connmax);
+		}
+	);
+//]]></script>
+
+<h2 name="content"><%:Status%></h2>
+
+<div class="cbi-section">
+	<h3><%:System%></h3>
+
+	<div class="table" width="100%">
+		<div class="tr"><div class="td left" width="33%"><%:Hostname%></div><div class="td left"><%=luci.sys.hostname() or "?"%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Model%></div><div class="td left"><%=pcdata(unameinfo.version or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Architecture%></div><div class="td left"><%=pcdata(unameinfo.machine or "?")%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Firmware Version%></div><div class="td left">
+			<%=pcdata(ver.distname)%> <%=pcdata(ver.distversion)%> /
+			<%=pcdata(ver.luciname)%> (<%=pcdata(ver.luciversion)%>)
+		</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Kernel Version%></div><div class="td left"><%=unameinfo.release or "?"%></div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Local Time%></div><div class="td left" id="localtime">-</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Uptime%></div><div class="td left" id="uptime">-</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Load Average%></div><div class="td left" id="loadavg">-</div></div>
+	</div>
+</div>
+
+<div class="cbi-section">
+	<h3><%:Memory%></h3>
+
+	<div class="table" width="100%">
+		<div class="tr"><div class="td left" width="33%"><%:Total Available%></div><div class="td left" id="memtotal">-</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Free%></div><div class="td left" id="memfree">-</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Buffered%></div><div class="td left" id="membuff">-</div></div>
+	</div>
+</div>
+
+<% if swapinfo.total > 0 then %>
+<div class="cbi-section">
+	<h3><%:Swap%></h3>
+
+	<div class="table" width="100%">
+		<div class="tr"><div class="td left" width="33%"><%:Total Available%></div><div class="td left" id="swaptotal">-</div></div>
+		<div class="tr"><div class="td left" width="33%"><%:Free%></div><div class="td left" id="swapfree">-</div></div>
+	</div>
+</div>
+<% end %>
+
+
+<%-
+	local incdir = util.libpath() .. "/view/admin_status/index/"
+	if fs.access(incdir) then
+		local inc
+		for inc in fs.dir(incdir) do
+			if inc:match("%.htm$") then
+				include("admin_status/index/" .. inc:gsub("%.htm$", ""))
+			end
+		end
+	end
+-%>
+
+<%+footer%>
