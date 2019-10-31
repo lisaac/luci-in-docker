@@ -24,7 +24,7 @@ docker run -dit \
   --name luci-in-docker \
   --restart unless-stopped \
   --privileged \
-  --network dMACvLAN --ip 10.1.1.13 \
+  --network dMACvLAN --ip 10.1.1.253 \
   -e TZ=Asia/Shanghai \
   -v $HOME/.docker/lucitest:/external:rslave \
   -v /media:/media:rshared \
@@ -33,5 +33,5 @@ docker run -dit \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --tmpfs /tmp:exec \
   --tmpfs /run \
-  alpine /bin/sh
+  lisaac/luci-in-docker /bin/sh
 ```
