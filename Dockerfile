@@ -7,7 +7,7 @@ RUN apk update && \
     apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev && \
     cd /tmp && git clone https://git.openwrt.org/project/libubox.git && \
     cd /tmp/libubox && cmake . && make && make install && \
-    cd && git clone https://git.openwrt.org/project/uci.git && \
+    cd /tmp && git clone https://git.openwrt.org/project/uci.git && \
     cd /tmp/uci && cmake . && make && \
     cd /tmp && git clone https://git.openwrt.org/project/ustream-ssl.git && \
     cd /tmp/ustream-ssl && cmake . && make && make install && \
