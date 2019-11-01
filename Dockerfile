@@ -27,7 +27,8 @@ ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' ORIGINAL_DIR='/.l
 RUN apk update && \
     apk add lua5.1 json-c libgcc tzdata smartmontools && \
     mkdir $ORIGINAL_DIR && \
-    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5
+    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
+    ln -s /usr/lib/libjson-c.so.4.0.0 /usr/lib/libjson-c.so.2
 
 COPY init.sh /
 COPY root $ORIGINAL_DIR
