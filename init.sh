@@ -48,6 +48,15 @@ merge_luci_root() {
   mkdir -p $LUCI_SYSROOT
   rm -fr $LUCI_SYSROOT/*
   cp -R $ORIGINAL_DIR/. $LUCI_SYSROOT/
+  if [ -d $ORIGINAL_DIR/etc/config ]; then
+    for cfg in $ORIGINAL_DIR/etc/config/*
+    do
+      if [ -f $cfg ]; then
+        cfg_name=$(echo $cfg | awk -F'/' '{print $NF}')
+        [ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
+      fi
+    done
+  fi
   for d in $PLUGIN_DIR/*
   do
     valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_].+")
