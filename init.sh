@@ -58,7 +58,7 @@ merge_luci_root() {
 start_uhttpd() {
   echo "starting uhttpd.."
   rm -fr /tmp/luci-*
-  exec $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -h $LUCI_SYSROOT/www -f
+  $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -h $LUCI_SYSROOT/www -f &
 }
 
 mount_config() {
@@ -71,7 +71,7 @@ mount_config() {
 case $1 in
     start)         merge_luci_root ; mount_config ; start_uhttpd;;
     stop)          killall uhttpd &> /dev/null;;
-    daemon)        merge_luci_root ; mount_config ; start_uhttpd;;
+    daemon)        merge_luci_root ; mount_config ; start_uhttpd; tail -f /dev/null;;
     restart)       killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;
     merge)         merge;;
     *)             killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;

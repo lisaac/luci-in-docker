@@ -36,3 +36,6 @@ COPY --from=compile_stage /tmp/dst/lua $ORIGINAL_DIR/usr/lib/lua/
 COPY --from=compile_stage /tmp/dst/bin $ORIGINAL_DIR/usr/sbin/
 
 RUN chmod +x /init.sh
+EXPOSE 80/tcp
+
+CMD ["/init.sh","daemon"]
