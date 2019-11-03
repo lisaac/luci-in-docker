@@ -1,5 +1,5 @@
 ## 关于 LuCI in Docker
-在使用docker的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将luci装入容器，以进行docker容器的配置文件管理。
+在使用docker的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将luci装入容器，配合 [luci-lib-docker](https://github.com/lisaac/luci-lib-docker) 以进行docker容器的配置文件管理。
 `luci-in-docker`将`openwrt`中`ubus`去除，宿主为`alpine`，方便后期增加插件。
 
 ## 目录结构

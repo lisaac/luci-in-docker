@@ -25,10 +25,9 @@ FROM alpine
 ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' ORIGINAL_DIR='/.luci'
 
 RUN apk update && \
-    apk add lua5.1 json-c libgcc tzdata smartmontools && \
+    apk add lua5.1 libgcc tzdata smartmontools && \
     mkdir $ORIGINAL_DIR && \
-    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
-    ln -s /usr/lib/libjson-c.so.4.0.0 /usr/lib/libjson-c.so.2
+    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5
 
 COPY init.sh /
 COPY root $ORIGINAL_DIR
