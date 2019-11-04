@@ -47,21 +47,36 @@
 <%+header%>
 
 <script type="text/javascript">//<![CDATA[
-	function progressbar(v, m)
+	function progressbar(v, m, pc, np)
 	{
-		var vn = parseInt(v) || 0;
-		var mn = parseInt(m) || 100;
-		var pc = Math.floor((100 / mn) * vn);
+		m = m || 100
+		// var vn = parseInt(v) || 0;
+		// var mn = parseInt(m) || 100;
+		// var pc = Math.floor((100 / mn) * vn);
 
 		return String.format(
-			'<div style="width:100%%; max-width:200px; position:relative; border:1px solid #999999">' +
+			'<div style="width:100%%; max-width:500px; position:relative; border:1px solid #999999">' +
 				'<div style="background-color:#CCCCCC; width:%d%%; height:15px">' +
 					'<div style="position:absolute; left:0; top:0; text-align:center; width:100%%; color:#000000">' +
-						'<small>%s / %s (%d%%)</small>' +
+						'<small>%s / %s '+ (np == true ? "" :'(%d%%)')+'</small>' +
 					'</div>' +
 				'</div>' +
 			'</div>', pc, v, m, pc
 		);
+	}
+
+	function niceBytes(x){
+		const units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+		if(x === 1) return '1 byte';
+
+		let l = 0, n = parseInt(x, 10) || 0;
+
+		while(n >= 1024 && ++l){
+				n = n/1024;
+		}
+		//include a decimal point and a tenths-place digit if presenting 
+		//less than ten of KB or greater units
+		return(n.toFixed(n < 10 && l > 0 ? 1 : 0) + ' ' + units[l]);
 	}
 
 	XHR.poll(5, '<%=REQUEST_URI%>', { status: 1 },
@@ -85,36 +100,39 @@
 
 			if (e = document.getElementById('memtotal'))
 				e.innerHTML = progressbar(
-					((info.memory.free + info.memory.buffered) / 1024) + " <%:kB%>",
-					(info.memory.total / 1024) + " <%:kB%>"
+					niceBytes(info.memory.free + info.memory.buffered),
+					niceBytes(info.memory.total),
+					Math.floor((100 / (info.memory.total?info.memory.total:100)) * ((info.memory.free + info.memory.buffered)?(info.memory.free + info.memory.buffered):0))
 				);
 
 			if (e = document.getElementById('memfree'))
 				e.innerHTML = progressbar(
-					(info.memory.free / 1024) + " <%:kB%>",
-					(info.memory.total / 1024) + " <%:kB%>"
+					niceBytes(info.memory.free),
+					niceBytes(info.memory.total),
+					Math.floor((100 / (info.memory.total?info.memory.total:100)) * (info.memory.free?info.memory.free:0))
 				);
 
 			if (e = document.getElementById('membuff'))
 				e.innerHTML = progressbar(
-					(info.memory.buffered / 1024) + " <%:kB%>",
-					(info.memory.total / 1024) + " <%:kB%>"
+					niceBytes(info.memory.buffered),
+					niceBytes(info.memory.total),
+					Math.floor((100 / (info.memory.total?info.memory.total:100)) * (info.memory.buffered?info.memory.buffered:0))
 				);
 
 			if (e = document.getElementById('swaptotal'))
 				e.innerHTML = progressbar(
-					(info.swap.free / 1024) + " <%:kB%>",
-					(info.swap.total / 1024) + " <%:kB%>"
+					niceBytes(info.swap.free),
+					niceBytes(info.swap.total),
+					Math.floor((100 / (info.swap.total?info.swap.total:100)) * (info.swap.free?info.swap.free:0))
 				);
 
 			if (e = document.getElementById('swapfree'))
 				e.innerHTML = progressbar(
-					(info.swap.free / 1024) + " <%:kB%>",
-					(info.swap.total / 1024) + " <%:kB%>"
+					niceBytes(info.swap.free),
+					niceBytes(info.swap.total),
+					Math.floor((100 / (info.swap.total?info.swap.total:100)) * (info.swap.free?info.swap.free:0))
 				);
 
-			if (e = document.getElementById('conns'))
-				e.innerHTML = progressbar(info.conncount, info.connmax);
 		}
 	);
 //]]></script>

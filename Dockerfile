@@ -4,7 +4,7 @@ MAINTAINER lisaac <lisaac.cn@gmail.com>
 
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 RUN apk update && \
-    apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
+    apk add git cmake make gcc libc-dev json-c0.12-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
     cd /tmp && git clone https://git.openwrt.org/project/libubox.git && \
     cd /tmp/libubox && cmake . && make && make install && \
@@ -23,7 +23,7 @@ RUN apk update && \
     cd /tmp/libnl-tiny/src && sed -i 's/^CFLAGS=/CFLAGS=-fPIC /g' Makefile && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/src/include/* /usr/include/ && \
     # luci
-    cd /tmp && git clone https://github.com/openwrt/luci.git && \
+    cd /tmp && git clone https://github.com/openwrt/luci.git && git checkout openwrt-18.06 && \
     # luci-lib-ip
     cd /tmp/luci/libs/luci-lib-ip/src && make && \
     # luci-lib-jsonc
@@ -56,7 +56,7 @@ FROM alpine
 ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' ORIGINAL_DIR='/.luci'
 
 RUN apk update && \
-    apk add lua5.1 json-c libgcc tzdata smartmontools && \
+    apk add lua5.1 json-c0.12 libgcc tzdata smartmontools && \
     mkdir $ORIGINAL_DIR && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5
 
