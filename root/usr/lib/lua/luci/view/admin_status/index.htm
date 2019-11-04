@@ -6,7 +6,6 @@
 
 <%
 	local fs = require "nixio.fs"
-	local ipc = require "luci.ip"
 	local util = require "luci.util"
 	local stat = require "luci.tools.status"
 	local ver = require "luci.version"
@@ -63,43 +62,6 @@
 				'</div>' +
 			'</div>', pc, v, m, pc
 		);
-	}
-
-	function labelList(items, offset) {
-		var rv = [ ];
-
-		for (var i = offset || 0; i < items.length; i += 2) {
-			var label = items[i],
-			    value = items[i+1];
-
-			if (value === undefined || value === null)
-				continue;
-
-			if (label)
-				rv.push(E('strong', [label, ': ']));
-
-			rv.push(value, E('br'));
-		}
-
-		return rv;
-	}
-
-	function renderBox(title, active, childs) {
-		childs = childs || [];
-		childs.unshift(E('span', labelList(arguments, 3)));
-
-		return E('div', { class: 'ifacebox' }, [
-			E('div', { class: 'ifacebox-head center ' + (active ? 'active' : '') },
-				E('strong', title)),
-			E('div', { class: 'ifacebox-body left' }, childs)
-		]);
-	}
-
-	function renderBadge(icon, title) {
-		return E('span', { class: 'ifacebadge' }, [
-			E('img', { src: icon, title: title || '' }),
-			E('span', labelList(arguments, 2))
-		]);
 	}
 
 	XHR.poll(5, '<%=REQUEST_URI%>', { status: 1 },
