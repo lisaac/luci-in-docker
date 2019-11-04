@@ -23,7 +23,7 @@ RUN apk update && \
     cd /tmp/libnl-tiny/src && sed -i 's/^CFLAGS=/CFLAGS=-fPIC /g' Makefile && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/src/include/* /usr/include/ && \
     # luci
-    cd /tmp && git clone https://github.com/openwrt/luci.git && git checkout openwrt-18.06 && \
+    cd /tmp && git clone https://github.com/openwrt/luci.git && cd /tmp/luci && git checkout openwrt-18.06 && \
     # luci-lib-ip
     cd /tmp/luci/libs/luci-lib-ip/src && make && \
     # luci-lib-jsonc
