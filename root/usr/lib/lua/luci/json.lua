@@ -1,43 +1,6 @@
---[[
-LuCI - Lua Configuration Interface
-
-Copyright 2008 Steven Barth <steven@midlink.org>
-Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-
-Decoder:
-	Info:
-		null will be decoded to luci.json.null if first parameter of Decoder() is true
-
-	Example:
-		decoder = luci.json.Decoder()
-		luci.ltn12.pump.all(luci.ltn12.source.string("decodableJSON"), decoder:sink())
-		luci.util.dumptable(decoder:get())
-
-	Known issues:
-		does not support unicode conversion \uXXYY with XX != 00 will be ignored
-
-
-Encoder:
-	Info:
-		Accepts numbers, strings, nil, booleans as they are
-		Accepts luci.json.null as replacement for nil
-		Accepts full associative and full numerically indexed tables
-		Mixed tables will loose their associative values during conversion
-		Iterator functions will be encoded as an array of their return values
-		Non-iterator functions will probably corrupt the encoder
-
-	Example:
-		encoder = luci.json.Encoder(encodableData)
-		luci.ltn12.pump.all(encoder:source(), luci.ltn12.sink.file(io.open("someFile", w)))
-]]--
+-- Copyright 2008 Steven Barth <steven@midlink.org>
+-- Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+-- Licensed to the public under the Apache License 2.0.
 
 local nixio     = require "nixio"
 local util      = require "luci.util"
@@ -62,14 +25,9 @@ local char      = string.char
 
 local getmetatable = getmetatable
 
---- LuCI JSON-Library
--- @cstyle	instance
 module "luci.json"
 
 
---- Directly decode a JSON string
--- @param json JSON-String
--- @return Lua object
 function decode(json, ...)
 	local a = ActiveDecoder(function() return nil end, ...)
 	a.chunk = json
@@ -78,9 +36,6 @@ function decode(json, ...)
 end
 
 
---- Direcly encode a Lua object into a JSON string.
--- @param obj Lua Object
--- @return JSON string
 function encode(obj, ...)
 	local out = {}
 	local e = Encoder(obj, 1, ...):source()
@@ -93,19 +48,10 @@ function encode(obj, ...)
 end
 
 
---- Null replacement function
--- @return null
 function null()
 	return null
 end
 
---- Create a new JSON-Encoder.
--- @class	function
--- @name	Encoder
--- @param data			Lua-Object to be encoded.
--- @param buffersize	Blocksize of returned data source.
--- @param fastescape	Use non-standard escaping (don't escape control chars)
--- @return JSON-Encoder
 Encoder = util.class()
 
 function Encoder.__init__(self, data, buffersize, fastescape)
@@ -117,8 +63,6 @@ function Encoder.__init__(self, data, buffersize, fastescape)
 	getmetatable(self).__call = Encoder.source
 end
 
---- Create an LTN12 source providing the encoded JSON-Data.
--- @return LTN12 source
 function Encoder.source(self)
 	local source = coroutine.create(self.dispatch)
 	return function()
@@ -205,11 +149,13 @@ function Encoder.parse_iter(self, obj)
 		local first = true
 
 		for key, entry in pairs(obj) do
-			first = first or self:put(",")
-			first = first and false
-			self:parse_string(tostring(key))
-			self:put(":")
-			self:dispatch(entry)
+			if key ~= null then
+				first = first or self:put(",")
+				first = first and false
+				self:parse_string(tostring(key))
+				self:put(":")
+				self:dispatch(entry)
+			end
 		end
 
 		self:put("}")
@@ -235,21 +181,21 @@ function Encoder.parse_iter(self, obj)
 	end
 end
 
+function Encoder.parse_udata(self, obj)
+	return self:parse_string(tostring(obj))
+end
+
 Encoder.parsers = {
 	['nil']      = Encoder.parse_nil,
 	['table']    = Encoder.parse_iter,
 	['number']   = Encoder.parse_number,
 	['string']   = Encoder.parse_string,
 	['boolean']  = Encoder.parse_bool,
-	['function'] = Encoder.parse_iter
+	['function'] = Encoder.parse_iter,
+	['userdata'] = Encoder.parse_udata,
 }
 
 
---- Create a new JSON-Decoder.
--- @class	function
--- @name	Decoder
--- @param customnull Use luci.json.null instead of nil for decoding null
--- @return JSON-Decoder
 Decoder = util.class()
 
 function Decoder.__init__(self, customnull)
@@ -257,8 +203,6 @@ function Decoder.__init__(self, customnull)
 	getmetatable(self).__call = Decoder.sink
 end
 
---- Create an LTN12 sink from the decoder object which accepts the JSON-Data.
--- @return LTN12 sink
 function Decoder.sink(self)
 	local sink = coroutine.create(self.dispatch)
 	return function(...)
@@ -267,8 +211,6 @@ function Decoder.sink(self)
 end
 
 
---- Get the decoded data packets after the rawdata has been sent to the sink.
--- @return Decoded data
 function Decoder.get(self)
 	return self.data
 end
@@ -563,11 +505,6 @@ Decoder.parsers = {
 }
 
 
---- Create a new Active JSON-Decoder.
--- @class	function
--- @name	ActiveDecoder
--- @param   customnull	Use luci.json.null instead of nil for decoding null
--- @return  Active JSON-Decoder
 ActiveDecoder = util.class(Decoder)
 
 function ActiveDecoder.__init__(self, source, customnull)
@@ -578,8 +515,6 @@ function ActiveDecoder.__init__(self, source, customnull)
 end
 
 
---- Fetches one JSON-object from given source
--- @return Decoded object
 function ActiveDecoder.get(self)
 	local chunk, src_err, object
 	if not self.chunk then
