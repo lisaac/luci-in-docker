@@ -4,7 +4,7 @@ MAINTAINER lisaac <lisaac.cn@gmail.com>
 
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 RUN apk update && \
-    apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers libnl-dev && \
+    apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
     cd /tmp && git clone https://git.openwrt.org/project/libubox.git && \
     cd /tmp/libubox && cmake . && make && make install && \
@@ -21,7 +21,7 @@ RUN apk update && \
     # libnl-tiny
     cd /tmp && git clone https://git.openwrt.org/project/libnl-tiny.git && \
     cd /tmp/libnl-tiny/src && sed -i 's/^CFLAGS=/CFLAGS=-fPIC /g' Makefile && make && \
-    mkdir -p /usr/lib && cp *.so /usr/lib/ && \
+    mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/src/include/* /usr/include/ && \
     # luci
     cd /tmp && git clone https://github.com/openwrt/luci.git && \
     # luci-lib-ip
