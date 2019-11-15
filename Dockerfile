@@ -21,7 +21,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cmake -DUBUS_SUPPORT=OFF . && make && cd /tmp && \
     # libnl-tiny
     cd /tmp && git clone https://git.openwrt.org/project/libnl-tiny.git && \
-    cd /tmp/libnl-tiny && sed -i 's/^CFLAGS=/CFLAGS=-fPIC /g' Makefile && make && \
+    cd /tmp/libnl-tiny && cmake . && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/src/include/* /usr/include/ && \
     # luci
     cd /tmp && git clone https://github.com/openwrt/luci.git && cd /tmp/luci && git checkout openwrt-18.06 && \
