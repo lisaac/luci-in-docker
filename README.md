@@ -22,6 +22,7 @@
 
 ## 运行容器
 ```
+docker pull lisaac/luci
 docker run -d \
   --name luci-in-docker \
   --restart unless-stopped \

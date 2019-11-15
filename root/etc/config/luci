@@ -22,9 +22,10 @@ config internal ccache
 	option enable 1
 		
 config internal themes
+option 'Bootstrap' '/luci-static/bootstrap'
 
 config internal apply
-	option rollback 30
-	option holdoff 4
-	option timeout 5
-	option display 1.5
+	option rollback 60
+	option holdoff 1
+	option timeout 1
+	option display 1
