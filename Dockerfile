@@ -44,7 +44,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cp /tmp/ustream-ssl/*.so /tmp/dst/lib/ && \
     cp /tmp/uci/*.so /tmp/dst/lib/ && cp /tmp/uci/lua/*.so /tmp/dst/lua/ && cp /tmp/uci/uci /tmp/dst/bin/ && \
     cp /tmp/uhttpd/*.so /tmp/dst/lib/ && cp /tmp/uhttpd/uhttpd /tmp/dst/bin/ && \
-    cp /tmp/libnl-tiny/src/*.so /tmp/dst/lib/ && \
+    cp /tmp/libnl-tiny/*.so /tmp/dst/lib/ && \
     cp /tmp/luci/libs/luci-lib-ip/src/*.so /tmp/dst/luci/ && \
     cp /tmp/luci/libs/luci-lib-jsonc/src/*.so /tmp/dst/luci/ && \
     cp /tmp/luci/libs/luci-lib-nixio/src/*.so  /tmp/dst/lua/ && \
