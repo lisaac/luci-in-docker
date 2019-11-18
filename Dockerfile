@@ -24,7 +24,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cd /tmp/libnl-tiny && cmake . && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/include/* /usr/include/ && \
     # luci
-    cd /tmp && git clone https://github.com/openwrt/luci.git && cd /tmp/luci && git checkout openwrt-18.06 && \
+    cd /tmp && git clone https://github.com/openwrt/luci.git && cd /tmp/luci && \
     # luci-lib-ip
     cd /tmp/luci/libs/luci-lib-ip/src && make && \
     # luci-lib-jsonc
@@ -46,7 +46,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cp /tmp/uhttpd/*.so /tmp/dst/lib/ && cp /tmp/uhttpd/uhttpd /tmp/dst/bin/ && \
     cp /tmp/libnl-tiny/*.so /tmp/dst/lib/ && \
     cp /tmp/luci/libs/luci-lib-ip/src/*.so /tmp/dst/luci/ && \
-    cp /tmp/luci/libs/luci-lib-jsonc/src/*.so /tmp/dst/luci/ && \
+    #cp /tmp/luci/libs/luci-lib-jsonc/src/*.so /tmp/dst/luci/ && \
     cp /tmp/luci/libs/luci-lib-nixio/src/*.so  /tmp/dst/lua/ && \
     cp /tmp/lucihttp/lucihttp.so /tmp/dst/lua && cp /tmp/lucihttp/liblucihttp.so* /tmp/dst/lib && \
     cp /tmp/luci/modules/luci-base/src/po2lmo /tmp/dst/bin/ && \
