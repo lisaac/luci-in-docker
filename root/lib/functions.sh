@@ -3,7 +3,6 @@
 # Copyright (C) 2006 Fokus Fraunhofer <carsten.tittel@fokus.fraunhofer.de>
 # Copyright (C) 2010 Vertical Communications
 
-
 debug () {
 	${DEBUG:-:} "$@"
 }
@@ -35,7 +34,7 @@ list_contains() {
 }
 
 config_load() {
-	[ -n "$IPKG_INSTROOT" ] && return 0
+	# [ -n "$IPKG_INSTROOT" ] && return 0
 	uci_load "$@"
 }
 
@@ -351,4 +350,4 @@ board_name() {
 	[ -e /tmp/sysinfo/board_name ] && cat /tmp/sysinfo/board_name || echo "generic"
 }
 
-[ -z "$IPKG_INSTROOT" -a -f /lib/config/uci.sh ] && . /lib/config/uci.sh
+[ -f $LUCI_SYSROOT/lib/config/uci.sh ] && . $LUCI_SYSROOT/lib/config/uci.sh
