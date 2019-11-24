@@ -46,6 +46,7 @@ merge() {
 merge_luci_root() {
   echo "merging luci root.."
   mkdir -p $LUCI_SYSROOT
+  mkdir -p $PLUGIN_DIR
   rm -fr $LUCI_SYSROOT/*
   cp -R $ORIGINAL_DIR/. $LUCI_SYSROOT/
   if [ -d $ORIGINAL_DIR/etc/config ]; then
@@ -72,7 +73,8 @@ start_uhttpd() {
 
 mount_config() {
   echo "mounting config.."
-  mkdir -p /etc/config $CONFIG_DIR/config
+  mkdir -p /etc/config
+  mkdir -p $CONFIG_DIR/config
   umount /etc/config 2&> /dev/null
   mount -o bind $CONFIG_DIR/config /etc/config
 }

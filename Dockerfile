@@ -58,7 +58,8 @@ ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' ORIGINAL_DIR='/.l
 
 RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
     apk --no-cache update && \
-    apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates && \
+    apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates && \ 
+    # util-linux mdadm e2fsprogs btrfs-progs partd smartmontools
     mkdir $ORIGINAL_DIR && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \

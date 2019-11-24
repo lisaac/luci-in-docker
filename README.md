@@ -32,6 +32,7 @@ docker run -d \
   -v $HOME/.docker/luci-in-docker:/external:rslave \
   -v /media:/media:rshared \
   -v /dev:/dev \
+  -v /proc:/hostproc \
   -v /usr/bin/docker:/usr/bin/docker \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --tmpfs /tmp:exec \
