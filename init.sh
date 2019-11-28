@@ -47,6 +47,7 @@ merge_luci_root() {
   echo "merging luci root.."
   mkdir -p $LUCI_SYSROOT
   mkdir -p $PLUGIN_DIR
+  mkdir -p $CONFIG_DIR/config
   rm -fr $LUCI_SYSROOT/*
   cp -R $ORIGINAL_DIR/. $LUCI_SYSROOT/
   if [ -d $ORIGINAL_DIR/etc/config ]; then

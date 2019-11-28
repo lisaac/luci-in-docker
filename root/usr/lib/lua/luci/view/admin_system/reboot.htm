@@ -8,7 +8,7 @@
 
 <h2 name="content"><%:Reboot%></h2>
 
-<p><%:Reboots the operating system of your device%></p>
+<p><%:Reboot LuCI%></p>
 
 <%- local c = require("luci.model.uci").cursor():changes(); if c and next(c) then -%>
 	<p class="alert-message warning"><%:Warning: There are unsaved changes that will get lost on reboot!%></p>
@@ -33,7 +33,7 @@
 	}
 
 	function check() {
-		window.setTimeout(ping, 5000);
+		window.setTimeout(ping, 1000);
 	}
 
 	function ping() {
@@ -55,7 +55,8 @@
 		message.style.display = '';
 		label.innerHTML = '<%:Waiting for device...%>';
 
-		(new XHR()).post('<%=url("admin/system/reboot/call")%>', { token: '<%=token%>' }, check);
+		(new XHR()).post('<%=url("admin/system/reboot/call")%>', { token: '<%=token%>' }, (check));
+		
 	}
 //]]></script>
 

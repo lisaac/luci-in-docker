@@ -13,24 +13,8 @@ function index()
 
 	entry({"admin", "system", "admin"}, cbi("admin_system/admin"), _("Administration"), 2)
 
-	if fs.access("/bin/opkg") then
-		entry({"admin", "system", "packages"}, post_on({ exec = "1" }, "action_packages"), _("Software"), 10)
-		entry({"admin", "system", "packages", "ipkg"}, form("admin_system/ipkg"))
-	end
-
 	entry({"admin", "system", "startup"}, form("admin_system/startup"), _("Startup"), 45)
 	entry({"admin", "system", "crontab"}, form("admin_system/crontab"), _("Scheduled Tasks"), 46)
-
-	if fs.access("/sbin/block") and fs.access("/etc/config/fstab") then
-		entry({"admin", "system", "fstab"}, cbi("admin_system/fstab"), _("Mount Points"), 50)
-		entry({"admin", "system", "fstab", "mount"}, cbi("admin_system/fstab/mount"), nil).leaf = true
-		entry({"admin", "system", "fstab", "swap"},  cbi("admin_system/fstab/swap"),  nil).leaf = true
-	end
-
-	local nodes, number = fs.glob("/sys/class/leds/*")
-	if number > 0 then
-		entry({"admin", "system", "leds"}, cbi("admin_system/leds"), _("<abbr title=\"Light Emitting Diode\">LED</abbr> Configuration"), 60)
-	end
 
 	entry({"admin", "system", "flashops"}, call("action_flashops"), _("Backup / Flash Firmware"), 70)
 	entry({"admin", "system", "flashops", "reset"}, post("action_reset"))
@@ -41,7 +25,7 @@ function index()
 	entry({"admin", "system", "flashops", "restore"}, call("action_restore"))
 	entry({"admin", "system", "flashops", "sysupgrade"}, call("action_sysupgrade"))
 
-	entry({"admin", "system", "reboot"}, template("admin_system/reboot"), _("Reboot"), 90)
+	entry({"admin", "system", "reboot"}, template("admin_system/reboot"), _("Reboot LuCI"), 90)
 	entry({"admin", "system", "reboot", "call"}, post("action_reboot"))
 end
 
@@ -390,7 +374,7 @@ function action_passwd()
 end
 
 function action_reboot()
-	luci.sys.reboot()
+	luci.sys.exec("/init.sh")
 end
 
 function fork_exec(command)
