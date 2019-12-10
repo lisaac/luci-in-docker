@@ -60,7 +60,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     apk --no-cache update && \
     apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates && \ 
     # util-linux mdadm e2fsprogs btrfs-progs partd smartmontools
-    mkdir $ORIGINAL_DIR && \
+    mkdir -p $ORIGINAL_DIR && mkdir -p $PLUGIN_DIR && mkdir -p $CONFIG_DIR/config && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     cd /tmp && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk && \

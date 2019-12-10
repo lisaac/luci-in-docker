@@ -31,8 +31,8 @@ docker run -d \
   -e TZ=Asia/Shanghai \
   -v $HOME/.docker/luci-in-docker:/external:rslave \
   -v /media:/media:rshared \
-  -v /dev:/dev \
-  -v /proc:/hostproc \
+  -v /dev:/dev:rslave \
+  -v /:/host:ro,rshared \
   -v /usr/bin/docker:/usr/bin/docker \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --tmpfs /tmp:exec \
