@@ -1,6 +1,17 @@
 <%
 	if not self.embedded then
-		%><form method="post" enctype="multipart/form-data" action="<%=REQUEST_URI%>">
+		%><form method="post" enctype="multipart/form-data" action="<%=REQUEST_URI%>"<%=
+			attr("data-strings", luci.util.serialize_json({
+				label = {
+					choose = translate('-- Please choose --'),
+					custom = translate('-- custom --'),
+				},
+				path = {
+					resource = resource,
+					browser  = url("admin/filebrowser")
+				}
+			}))
+		%>>
 			<input type="hidden" name="token" value="<%=token%>" />
 			<input type="hidden" name="cbi.submit" value="1" /><%
 	end
