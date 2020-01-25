@@ -2,8 +2,11 @@ FROM alpine:edge as compile_stage
 
 MAINTAINER lisaac <lisaac.cn@gmail.com>
 
-#sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
-RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
+ENV DST_ROOT='/tmp/dst'
+
+COPY root $DST_ROOT
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
     apk update && \
     apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
@@ -23,8 +26,12 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cd /tmp && git clone https://git.openwrt.org/project/libnl-tiny.git && \
     cd /tmp/libnl-tiny && cmake . && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/include/* /usr/include/ && \
+    # liblucihttp
+    cd /tmp/ && git clone https://github.com/jow-/lucihttp.git && \
+    cd /tmp/lucihttp && cmake . && make && \
     # luci
     cd /tmp && git clone https://github.com/openwrt/luci.git && cd /tmp/luci && \
+    git checkout openwrt-19.07 && \
     # luci-lib-ip
     cd /tmp/luci/libs/luci-lib-ip/src && make && \
     # luci-lib-jsonc
@@ -34,23 +41,21 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     sed -i 's/^CFLAGS *+=/CFLAGS       += -fPIC /g' Makefile && make && \
     # parser.so & po2lmo
     cd /tmp/luci/modules/luci-base/src && sed -i '1i\CFLAGS += -fPIC' Makefile && \
-    make parser.so && make po2lmo && \
-    # liblucihttp
-    cd /tmp/ && git clone https://github.com/jow-/lucihttp.git && \
-    cd /tmp/lucihttp && cmake . && make && \
+    make parser.so && make po2lmo && make jsmin && \
     # copy to dst
-    mkdir -p /tmp/dst/lib && mkdir -p /tmp/dst/lua && mkdir -p /tmp/dst/bin && mkdir -p /tmp/dst/luci/template && \
-    cp /tmp/libubox/*.so /tmp/dst/lib/ && cp /tmp/libubox/lua/*.so /tmp/dst/lua/ && \
-    cp /tmp/ustream-ssl/*.so /tmp/dst/lib/ && \
-    cp /tmp/uci/*.so /tmp/dst/lib/ && cp /tmp/uci/lua/*.so /tmp/dst/lua/ && cp /tmp/uci/uci /tmp/dst/bin/ && \
-    cp /tmp/uhttpd/*.so /tmp/dst/lib/ && cp /tmp/uhttpd/uhttpd /tmp/dst/bin/ && \
-    cp /tmp/libnl-tiny/*.so /tmp/dst/lib/ && \
-    cp /tmp/luci/libs/luci-lib-ip/src/*.so /tmp/dst/luci/ && \
-    #cp /tmp/luci/libs/luci-lib-jsonc/src/*.so /tmp/dst/luci/ && \
-    cp /tmp/luci/libs/luci-lib-nixio/src/*.so  /tmp/dst/lua/ && \
-    cp /tmp/lucihttp/lucihttp.so /tmp/dst/lua && cp /tmp/lucihttp/liblucihttp.so* /tmp/dst/lib && \
-    cp /tmp/luci/modules/luci-base/src/po2lmo /tmp/dst/bin/ && \
-    cp /tmp/luci/modules/luci-base/src/parser.so /tmp/dst/luci/template
+    mkdir -p $DST_ROOT/usr/lib && mkdir -p $DST_ROOT/usr/lib/lua && mkdir -p $DST_ROOT/usr/sbin && mkdir -p $DST_ROOT/usr/lib/lua/luci/template && mkdir -p $DST_ROOT/www &&\
+    cp /tmp/libubox/*.so $DST_ROOT/usr/lib/ && cp /tmp/libubox/lua/*.so $DST_ROOT/usr/lib/lua/ && \
+    cp /tmp/ustream-ssl/*.so $DST_ROOT/usr/lib/ && \
+    cp /tmp/uci/*.so $DST_ROOT/usr/lib/ && cp /tmp/uci/lua/*.so $DST_ROOT/usr/lib/lua/ && cp /tmp/uci/uci $DST_ROOT/usr/sbin/ && \
+    cp /tmp/uhttpd/*.so $DST_ROOT/usr/lib/ && cp /tmp/uhttpd/uhttpd $DST_ROOT/usr/sbin/ && \
+    cp /tmp/libnl-tiny/*.so $DST_ROOT/usr/lib/ && \
+    cp /tmp/luci/libs/luci-lib-ip/src/*.so $DST_ROOT/usr/lib/lua/luci/ && \
+    cp /tmp/luci/libs/luci-lib-jsonc/src/*.so $DST_ROOT/usr/lib/lua/luci/ && \
+    cp /tmp/luci/libs/luci-lib-nixio/src/*.so  $DST_ROOT/usr/lib/lua/ && \
+    cp /tmp/lucihttp/lucihttp.so $DST_ROOT/usr/lib/lua && cp /tmp/lucihttp/liblucihttp.so* $DST_ROOT/usr/lib && \
+    cp /tmp/luci/modules/luci-base/src/po2lmo $DST_ROOT/usr/sbin/ && \
+    cp /tmp/luci/modules/luci-base/src/jsmin $DST_ROOT/usr/sbin/ && \
+    cp /tmp/luci/modules/luci-base/src/parser.so $DST_ROOT/usr/lib/lua/luci/template
 
 FROM alpine:edge
 
@@ -67,11 +72,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     apk add glibc-2.30-r0.apk && rm /tmp/glibc-2.30-r0.apk
 
 COPY init.sh /
-COPY root $ORIGINAL_DIR
-COPY --from=compile_stage /tmp/dst/lib $ORIGINAL_DIR/usr/lib/
-COPY --from=compile_stage /tmp/dst/lua $ORIGINAL_DIR/usr/lib/lua/
-COPY --from=compile_stage /tmp/dst/luci $ORIGINAL_DIR/usr/lib/lua/luci
-COPY --from=compile_stage /tmp/dst/bin $ORIGINAL_DIR/usr/sbin/
+COPY --from=compile_stage /tmp/dst $ORIGINAL_DIR
 
 RUN chmod +x /init.sh
 EXPOSE 80/tcp

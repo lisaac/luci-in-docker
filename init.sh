@@ -29,18 +29,26 @@ merge() {
       fi
     done
   fi
+  # 合并 luasrc
   mkdir -p $dst/usr/lib/lua/luci/
   [ -d $src/luasrc ] && cp -R $src/luasrc/. $dst/usr/lib/lua/luci/
+  # 合并 htdoc
   mkdir -p $dst/www/
   [ -d $src/htdoc ] && cp -R $src/htdoc/. $dst/www/
-  # mkdir -p $dst/usr/lib/lua/luci/i18n/
-  # if [ -d $src/po ]; then
-  #   for po in $src/po/*
-  #   do
-  #     po_name=$(echo $po | awk -F'/' '{print $NF}' | awk -F'.' '{if ($NF=="po") $NF="";print}' )
-  #     po2lmo $po $dst/usr/lib/lua/luci/i18n/$po_name.lmo
-  #   done
-  # fi
+  # i18n
+  mkdir -p $dst/usr/lib/lua/luci/i18n/
+  if [ -d $src/po ]; then
+    for i18n in $src/po/*
+    do
+      for po in $i18n/*.po
+      do
+        po_name=$(echo $po | awk -F'/' '{print $NF}' | awk -F'.' '{print $1}').$(echo $i18n | awk -F'/' '{print $NF}')
+        po2lmo $po $dst/usr/lib/lua/luci/i18n/$po_name.lmo
+      done
+    done
+  fi
+  # 安装 depends
+  [ -f $src/depends.lst ] && depends=$(cat $src/depends.lst) && apk add $depends
 }
 
 merge_luci_root() {
@@ -69,7 +77,7 @@ merge_luci_root() {
 start_uhttpd() {
   echo "starting uhttpd.."
   rm -fr /tmp/luci-*
-  $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -h $LUCI_SYSROOT/www -f &
+  $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -h $LUCI_SYSROOT/www -f &
 }
 
 mount_config() {
@@ -81,10 +89,10 @@ mount_config() {
 }
 
 case $1 in
-    start)         merge_luci_root ; mount_config ; start_uhttpd;;
-    stop)          killall uhttpd &> /dev/null;;
-    daemon)        merge_luci_root ; mount_config ; start_uhttpd; tail -f /dev/null;;
-    restart)       killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;
-    merge)         merge;;
-    *)             killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;
+  start)         merge_luci_root ; mount_config ; start_uhttpd;;
+  stop)          killall uhttpd &> /dev/null;;
+  daemon)        merge_luci_root ; mount_config ; start_uhttpd; tail -f /dev/null;;
+  restart)       killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;
+  merge)         merge;;
+  *)             killall uhttpd &> /dev/null ; merge_luci_root ; mount_config ; start_uhttpd;;
 esac

@@ -4,7 +4,7 @@
 			attr("name", "password." .. cbid)
 		%> />
 	<%- end -%>
-	<input data-update="change"<%=
+	<input data-update="change" <%- if self.width then -%> style="width: <%=self.width %>" <%- end -%> <%=
 		attr("id", cbid) ..
 		attr("name", cbid) ..
 		attr("type", self.password and "password" or "text") ..
