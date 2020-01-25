@@ -59,20 +59,20 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
 
 FROM alpine:edge
 
-ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' ORIGINAL_DIR='/.luci'
+ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_LUCI_DIR='/internal/plugin/luci/root'
 
 RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
     apk --no-cache update && \
     apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates && \ 
     # util-linux mdadm e2fsprogs btrfs-progs partd smartmontools
-    mkdir -p $ORIGINAL_DIR && mkdir -p $PLUGIN_DIR && mkdir -p $CONFIG_DIR/config && \
+    mkdir -p $INTERNAL_LUCI_DIR && mkdir -p $PLUGIN_DIR && mkdir -p $CONFIG_DIR && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
     cd /tmp && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk && \
     apk add glibc-2.30-r0.apk && rm /tmp/glibc-2.30-r0.apk
 
 COPY init.sh /
-COPY --from=compile_stage /tmp/dst $ORIGINAL_DIR
+COPY --from=compile_stage /tmp/dst $INTERNAL_LUCI_DIR/
 
 RUN chmod +x /init.sh
 EXPOSE 80/tcp

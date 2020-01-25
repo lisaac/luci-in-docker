@@ -2,7 +2,7 @@
 
 PLUGIN_DIR='/external/plugin'
 CONFIG_DIR='/external/cfg.d'
-ORIGINAL_DIR='/.luci'
+INTERNAL_PLUGIN_DIR='/internal/plugin'
 export LUCI_SYSROOT='/tmp/.luci' #`cd $1; pwd`
 export IPKG_INSTROOT=$LUCI_SYSROOT
 export LD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH"
@@ -57,16 +57,15 @@ merge_luci_root() {
   mkdir -p $PLUGIN_DIR
   mkdir -p $CONFIG_DIR/config
   rm -fr $LUCI_SYSROOT/*
-  cp -R $ORIGINAL_DIR/. $LUCI_SYSROOT/
-  if [ -d $ORIGINAL_DIR/etc/config ]; then
-    for cfg in $ORIGINAL_DIR/etc/config/*
-    do
-      if [ -f $cfg ]; then
-        cfg_name=$(echo $cfg | awk -F'/' '{print $NF}')
-        [ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
-      fi
-    done
-  fi
+
+  echo "mergeing internal plugin.."
+  for d in $INTERNAL_PLUGIN_DIR/*
+  do
+    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_].+")
+    [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
+  done
+
+  echo "mergeing external plugin.."
   for d in $PLUGIN_DIR/*
   do
     valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_].+")
