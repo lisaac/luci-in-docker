@@ -14,7 +14,7 @@
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
-        |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开
+        |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
         |-init.sh     # 插件所需的初始化脚本
       |-...
   |- internal         # 内部目录，luci-in-docker 自带插件目录
@@ -24,7 +24,7 @@
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
-        |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开
+        |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
         |-init.sh     # 插件所需的初始化脚本
       |-...
   |tmp
@@ -32,7 +32,7 @@
 ```
 - 通过遍历 internal/external 目录下 plugin 中的各个插件目录，将其合并至/temp/.luci目录中，并修改 path 环境变量
 - 同时保证兼容性和持久性 config 目录存储位置为external/cfg.d/config, 挂载至/etc/config
-- 遍历的同时会安装插件目录下 depends.lst 中需要的依赖，并且执行插件目录下 init.sh
+- 遍历的同时会通过`apk add `方式安装插件目录下 depends.lst 中需要的依赖，并且执行插件目录下 init.sh
 
 ## 运行容器
 ```
@@ -55,16 +55,19 @@ docker run -d \
 ```
 
 ## 插件
+
 > 插件支持 lua 编写的源码，或者编译完成后 ipk 中的 data 目录中的内容
-以添加插件 [luci-app-diskman](https://github.com/lisaac/luci-app-diskman) 为例，软件容器的时候，已经通过
-`-v $HOME/pods/luci:/external` 将`$HOME/pods/luci`映射到容器中`/external`，所以我们只需:
+
+以添加插件 [luci-app-diskman](https://github.com/lisaac/luci-app-diskman) 为例：
+创建容器的时候，已经通过`-v $HOME/pods/luci:/external` 将`$HOME/pods/luci`映射到容器中`/external`，所以我们只需拉取仓库，并重启容器:
 ```
 mkdir -p $HOME/pods/luci/plugin
+#拉取仓库
 git clone https://github.com/lisaac/luci-app-diskman $HOME/pods/luci/plugin/luci-app-diskman
+#重启容器
+docker restart luci 
 ```
-接下来重启容器即可
 > tips: 由于 `luci-app-diskman` 中的依赖较多，第一次启动安装依赖可能会比较慢，需要多等一会，通过 `docker logs luci` 可以看到运行日志
-
 
 添加插件 [luci-app-dockerman](https://github.com/lisaac/luci-app-dockerman):
 ```
