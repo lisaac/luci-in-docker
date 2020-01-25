@@ -1,5 +1,5 @@
 ## 关于 LuCI in Docker
-在使用docker的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将luci装入容器，配合 [luci-lib-docker](https://github.com/lisaac/luci-lib-docker) 以进行docker容器的配置文件管理。
+在使用 `docker` 的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将 `luci` 装入容器，配合 [`luci-lib-docker`](https://github.com/lisaac/luci-lib-docker) 以进行 `docker` 容器的配置文件管理。
 `luci-in-docker`将`openwrt`中`ubus`去除，宿主为`alpine`，方便后期增加插件。
 
 ## 目录结构
@@ -30,9 +30,9 @@
   |tmp
     |-.luci           # 合并后的 luci root 目录
 ```
-- 通过遍历 internal/external 目录下 plugin 中的各个插件目录，将其合并至/temp/.luci目录中，并修改 path 环境变量
-- 同时保证兼容性和持久性 config 目录存储位置为external/cfg.d/config, 挂载至/etc/config
-- 遍历的同时会通过`apk add `方式安装插件目录下 depends.lst 中需要的依赖，并且执行插件目录下 init.sh
+- 通过遍历 `internal/external` 目录下 `plugin` 中的各个插件目录，将其合并至 `/temp/.luci` 目录中，并修改 `path` 环境变量
+- 同时保证兼容性和持久性 `config` 目录存储位置为 `external/cfg.d/config`, 挂载至 `/etc/config`
+- 遍历的同时会通过`apk add `方式安装插件目录下 `depends.lst` 中需要的依赖，并且执行插件目录下 `init.sh`
 
 ## 运行容器
 ```
@@ -56,13 +56,13 @@ docker run -d \
 
 ## 插件
 
-> 插件合并时不会执行按照 Makefile 编译，所以需要编译完成后 ipk 中的 data 目录中的内容，或者存 lua 源码 + 二进制文件
-> 插件中 po 目录下的翻译文件会自动转换成对应 lmo，并合并至 luci/i18n 目录
-> 插件中依赖文件 depends.lst 为 alpine 依赖，并非 openwrt 中的依赖，所需要的依赖需要转化
-> 插件中的 init.sh 是在遍历插件目录执行的，可能 init.sh 存在依赖其他插件的情况，可以将插件目录的加上数字，来确定遍历顺序
-> 插件目录名若以 _ 开头，则会跳过此插件
+- 插件合并时不会执行按照 `Makefile` 编译，所以需要编译完成后 `ipk` 中的 `data` 目录中的内容，或者存 `lua` 源码 + 二进制文件
+- 插件中 `po` 目录下的翻译文件会自动转换成对应 `lmo`，并合并至 `luci/i18n` 目录
+- 插件中依赖文件 `depends.lst` 为 `alpine` 依赖，并非 `openwrt` 中的依赖，所需要的依赖需要转化
+- 插件中的 `init.sh` 是在遍历插件目录执行的，可能 `init.sh` 存在依赖其他插件的情况，可以将插件目录的加上数字，来确定遍历顺序
+- 插件目录名若以 `_` 开头，则会跳过此插件
 
-以添加插件 [luci-app-diskman](https://github.com/lisaac/luci-app-diskman) 为例：
+以添加插件 [`luci-app-diskman`](https://github.com/lisaac/luci-app-diskman) 为例：
 创建容器的时候，已经通过`-v $HOME/pods/luci:/external` 将`$HOME/pods/luci`映射到容器中`/external`，所以我们只需拉取仓库，并重启容器:
 ```
 mkdir -p $HOME/pods/luci/plugin
@@ -73,7 +73,7 @@ docker restart luci
 ```
 > tips: 由于 `luci-app-diskman` 中的依赖较多，第一次启动安装依赖可能会比较慢，需要多等一会，通过 `docker logs luci` 可以看到运行日志
 
-添加插件 [luci-app-dockerman](https://github.com/lisaac/luci-app-dockerman):
+添加插件 [`luci-app-dockerman`](https://github.com/lisaac/luci-app-dockerman):
 ```
 git clone https://github.com/lisaac/luci-lib-docker $HOME/pods/luci/plugin/luci-lib-docker
 git clone https://github.com/lisaac/luci-app-dockerman $HOME/pods/luci/plugin/luci-app-dockerman
