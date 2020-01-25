@@ -5,16 +5,7 @@
 ## 目录结构
 ```
 /
-  |- internal         # 内部目录，为luci-in-docker自带插件目录
-    |-plugin          # 内部插件目录
-      |-luci          # luci目录
-        |-root
-        |-luasrc
-        |-htdoc
-        |-po
-        |-depends.lst
-      |-...
-  |- external         # 外部目录，一般为容器外部挂载
+  |- external         # 外部目录，需要外部挂载
     |-cfg.d
       |-config        # cofnig目录，用于存放配置文件，启动后挂载至/etc/config
     |-plugin          # 插件目录
@@ -24,6 +15,17 @@
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开
+        |-init.sh     # 插件所需的初始化脚本
+      |-...
+  |- internal         # 内部目录，为luci-in-docker自带插件目录
+    |-plugin          # 内部插件目录
+      |-luci          # luci目录
+        |-root        # 插件所需的 root 目录，合并至/tmp/.luci/
+        |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
+        |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
+        |-po          # 插件所需的 po 文件目录
+        |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开
+        |-init.sh     # 插件所需的初始化脚本
       |-...
   |tmp
     |-.luci           # 启动 luci 后的luci root 目录

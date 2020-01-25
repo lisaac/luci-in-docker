@@ -49,6 +49,8 @@ merge() {
   fi
   # 安装 depends
   [ -f $src/depends.lst ] && depends=$(cat $src/depends.lst) && apk add $depends
+  # 执行 init.sh
+  [ -f $src/init.sh ] && chmod +x $src/init.sh && $src/init.sh
 }
 
 merge_luci_root() {
