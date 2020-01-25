@@ -56,10 +56,10 @@ docker run -d \
 
 ## 插件
 
-- 插件合并时不会执行按照 `Makefile` 编译，所以需要编译完成后 `ipk` 中的 `data` 目录中的内容，或者存 `lua` 源码 + 二进制文件
+- 插件合并时不会执行按照 `Makefile` 编译，所以需要编译完成后 `ipk` 中的 `data` 目录中的内容，或者纯 `lua` 源码 + 二进制文件
 - 插件中 `po` 目录下的翻译文件会自动转换成对应 `lmo`，并合并至 `luci/i18n` 目录
-- 插件中依赖文件 `depends.lst` 为 `alpine` 依赖，并非 `openwrt` 中的依赖，所需要的依赖需要转化
-- 插件中的 `init.sh` 是在遍历插件目录执行的，可能 `init.sh` 存在依赖其他插件的情况，可以将插件目录的加上数字，来确定遍历顺序
+- 插件中依赖文件 `depends.lst` 为 `alpine` 依赖，并非 `openwrt` 中的依赖
+- 插件中的 `init.sh` 是在遍历插件目录执行的，可能 `init.sh` 存在依赖其他插件的情况，可以将插件目录开头的加上数字，来确定遍历顺序
 - 插件目录名若以 `_` 开头，则会跳过此插件
 
 以添加插件 [`luci-app-diskman`](https://github.com/lisaac/luci-app-diskman) 为例：
