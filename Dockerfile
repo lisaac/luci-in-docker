@@ -47,7 +47,8 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     sed -i 's/^CFLAGS *+=/CFLAGS       += -fPIC /g' Makefile && make && \
     # parser.so & po2lmo
     cd /tmp/luci/modules/luci-base/src && sed -i '1i\CFLAGS += -fPIC' Makefile && \
-    make parser.so && make po2lmo && make jsmin && \
+    make parser.so && make po2lmo && \
+    # make jsmin && \
     # copy to dst
     mkdir -p $DST_ROOT/usr/lib && mkdir -p $DST_ROOT/usr/lib/lua && mkdir -p $DST_ROOT/usr/sbin && mkdir -p $DST_ROOT/usr/lib/lua/luci/template && mkdir -p $DST_ROOT/www &&\
     cp /tmp/libubox/*.so $DST_ROOT/usr/lib/ && cp /tmp/libubox/lua/*.so $DST_ROOT/usr/lib/lua/ && \
@@ -60,7 +61,7 @@ RUN sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testi
     cp /tmp/luci/libs/luci-lib-nixio/src/*.so  $DST_ROOT/usr/lib/lua/ && \
     cp /tmp/lucihttp/lucihttp.so $DST_ROOT/usr/lib/lua && cp /tmp/lucihttp/liblucihttp.so* $DST_ROOT/usr/lib && \
     cp /tmp/luci/modules/luci-base/src/po2lmo $DST_ROOT/usr/sbin/ && \
-    cp /tmp/luci/modules/luci-base/src/jsmin $DST_ROOT/usr/sbin/ && \
+    # cp /tmp/luci/modules/luci-base/src/jsmin $DST_ROOT/usr/sbin/ && \
     cp /tmp/luci/modules/luci-base/src/parser.so $DST_ROOT/usr/lib/lua/luci/template
 
 FROM alpine:edge
