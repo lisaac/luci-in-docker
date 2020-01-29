@@ -15,7 +15,8 @@
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
-        |-init.sh     # 插件所需的初始化脚本
+        |-preinst     # 插件所需的初始化脚本(安装前)
+        |-postinst    # 插件所需的初始化脚本(安装后)
       |-...
   |- internal         # 内部目录，luci-in-docker 自带插件目录
     |-plugin          # 内部插件目录
@@ -25,14 +26,15 @@
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
-        |-init.sh     # 插件所需的初始化脚本
+        |-preinst     # 插件所需的初始化脚本(安装前)
+        |-postinst    # 插件所需的初始化脚本(安装后)
       |-...
   |tmp
     |-.luci           # 合并后的 luci root 目录
 ```
 - 通过遍历 `internal/external` 目录下 `plugin` 中的各个插件目录，将其合并至 `/temp/.luci` 目录中，并修改 `path` 环境变量
 - 同时保证兼容性和持久性 `config` 目录存储位置为 `external/cfg.d/config`, 挂载至 `/etc/config`
-- 遍历的同时会通过`apk add `方式安装插件目录下 `depends.lst` 中需要的依赖，并且执行插件目录下 `init.sh`
+- 遍历时先执行`preinst`，合并后到 `/temp/.luci` 后，会通过 `apk add` 方式安装插件目录下 `depends.lst` 中需要的依赖，最后执行插件目录下 `postinst`
 
 ## 运行容器
 ```
@@ -59,7 +61,7 @@ docker run -d \
 - 插件合并时不会执行按照 `Makefile` 编译，所以需要编译完成后 `ipk` 中的 `data` 目录中的内容，或者纯 `lua` 源码 + 二进制文件
 - 插件中 `po` 目录下的翻译文件会自动转换成对应 `lmo`，并合并至 `luci/i18n` 目录
 - 插件中依赖文件 `depends.lst` 为 `alpine` 依赖，并非 `openwrt` 中的依赖
-- 插件中的 `init.sh` 是在遍历插件目录执行的，可能 `init.sh` 存在依赖其他插件的情况，可以将插件目录开头的加上数字，来确定遍历顺序
+- 插件中的 `preinst`及 `postinst` 是在遍历插件目录执行的，可能执行 `preinst` 及 `postinst` 存在依赖其他插件的情况，可以将插件目录开头的加上数字，来确定遍历顺序
 - 插件目录名若以 `_` 开头，则会跳过此插件
 
 以添加插件 [`luci-app-diskman`](https://github.com/lisaac/luci-app-diskman) 为例：

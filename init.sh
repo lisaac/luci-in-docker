@@ -16,6 +16,8 @@ merge() {
   src=$1
   dst=$2
   mkdir -p $dst
+    # 执行 preinst
+  [ -f $src/preinst ] && chmod +x $src/preinst && $src/preinst
   #合并root
   [ -d $src/root ] && cp -R $src/root/. $dst/ &&\
   #合并config
@@ -49,8 +51,8 @@ merge() {
   fi
   # 安装 depends
   [ -f $src/depends.lst ] && depends=$(cat $src/depends.lst) && apk add $depends
-  # 执行 init.sh
-  [ -f $src/init.sh ] && chmod +x $src/init.sh && $src/init.sh
+  # 执行 postinst
+  [ -f $src/postinst ] && chmod +x $src/postinst && $src/postinst
 }
 
 merge_luci_root() {
