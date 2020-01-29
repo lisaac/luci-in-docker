@@ -3,8 +3,9 @@
 
 local fs   = require "nixio.fs"
 local util = require "nixio.util"
+local SYSROOT = os.getenv("LUCI_SYSROOT")
 
-local has_fscheck = fs.access("/usr/sbin/e2fsck")
+local has_fscheck = fs.access(SYSROOT .. "/usr/sbin/e2fsck")
 
 local block = io.popen("block info", "r")
 local ln, dev, devices = nil, nil, {}

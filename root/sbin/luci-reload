@@ -1,5 +1,6 @@
 #!/bin/sh
-. /lib/functions.sh
+
+. $IPKG_INSTROOT/lib/functions.sh
 
 apply_config() {
 	config_get init "$1" init
@@ -17,7 +18,7 @@ reload_exec() {
 	local ok="$3"
 	set -- $2
 	local cmd="$1"; shift
-	
+
 	[ -x "$cmd" ] && {
 		echo "Reloading $service... "
 		( $cmd "$@" ) 2>/dev/null 1>&2
@@ -26,14 +27,14 @@ reload_exec() {
 }
 
 reload_init() {
-	[ -x /etc/init.d/$2 ] && /etc/init.d/$2 enabled && {
+	[ -x $IPKG_INSTROOT/etc/init.d/$2 ] && $IPKG_INSTROOT/etc/init.d/$2 enabled && {
 		echo "Reloading $1... "
-		/etc/init.d/$2 reload >/dev/null 2>&1
+		$IPKG_INSTROOT/etc/init.d/$2 reload >/dev/null 2>&1
 		[ -n "$3" -a "$?" != "$3" ] && echo '!!! Failed to reload' $1 '!!!'
 	}
 }
 
-lock "/var/run/luci-reload"
+# lock "/var/run/luci-reload"
 
 config_load ucitrack
 
@@ -42,4 +43,4 @@ for i in $*; do
 done
 
 rm -f "/var/run/luci-reload-status"
-lock -u "/var/run/luci-reload"
+# lock -u "/var/run/luci-reload"

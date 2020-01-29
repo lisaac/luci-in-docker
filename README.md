@@ -15,8 +15,8 @@
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
-        |-preinst     # 插件所需的初始化脚本(安装前)
-        |-postinst    # 插件所需的初始化脚本(安装后)
+        |-preinst     # 插件所需的初始化脚本(合并前)
+        |-postinst    # 插件所需的初始化脚本(合并后)
       |-...
   |- internal         # 内部目录，luci-in-docker 自带插件目录
     |-plugin          # 内部插件目录
@@ -26,15 +26,15 @@
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
-        |-preinst     # 插件所需的初始化脚本(安装前)
-        |-postinst    # 插件所需的初始化脚本(安装后)
+        |-preinst     # 插件所需的初始化脚本(合并前)
+        |-postinst    # 插件所需的初始化脚本(合并后)
       |-...
   |tmp
     |-.luci           # 合并后的 luci root 目录
 ```
 - 通过遍历 `internal/external` 目录下 `plugin` 中的各个插件目录，将其合并至 `/temp/.luci` 目录中，并修改 `path` 环境变量
 - 同时保证兼容性和持久性 `config` 目录存储位置为 `external/cfg.d/config`, 挂载至 `/etc/config`
-- 遍历时先执行`preinst`，合并后到 `/temp/.luci` 后，会通过 `apk add` 方式安装插件目录下 `depends.lst` 中需要的依赖，最后执行插件目录下 `postinst`
+- 遍历时先执行`preinst`，插件目录合并到 `/temp/.luci` 后，会通过 `apk add` 方式安装插件目录下 `depends.lst` 中需要的依赖，最后执行插件目录下 `postinst`
 
 ## 运行容器
 ```

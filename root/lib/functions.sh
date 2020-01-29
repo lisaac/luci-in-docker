@@ -231,7 +231,7 @@ default_postinst() {
 	fi
 
 	if [ -z "$root" ] && grep -q -s "^/etc/uci-defaults/" "/usr/lib/opkg/info/${pkgname}.list"; then
-		. /lib/functions/system.sh
+		. $IPKG_INSTROOT/lib/functions/system.sh
 		[ -d /tmp/.uci ] || mkdir -p /tmp/.uci
 		for i in $(grep -s "^/etc/uci-defaults/" "/usr/lib/opkg/info/${pkgname}.list"); do
 			( [ -f "$i" ] && cd "$(dirname $i)" && . "$i" ) && rm -f "$i"

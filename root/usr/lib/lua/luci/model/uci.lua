@@ -453,19 +453,6 @@ function Cursor._apply(self, configlist, command)
 	end
 end
 
---- Applies UCI configuration changes
--- @param configlist		List of UCI configurations
--- @param command			Don't apply only return the command
-function Cursor._apply_docker(self, configlist, command)
-	if command then
-		return { SYSROOT .. "/sbin/luci-reload-docker", unpack(configlist) }
-	else
-		 os.execute( SYSROOT .. "/sbin/luci-reload-docker %s >/dev/null 2>&1"
-			% table.concat(configlist, " "))
-			return 0
-	end
-end
-
 function Cursor.apply(self, rollback)
 	local _, err
 
@@ -482,23 +469,15 @@ function Cursor.apply(self, rollback)
 			return token
 		end
 	else
-		_, err = self:changes()
+		res, err = self:changes()
 		local configlist = {}
-		local docker_configlist = {}
 		if not err then
-			if type(_) == "table" then
+			if type(res) == "table" then
 				local k, v
-				for k, v in pairs(_) do
+				for k, v in pairs(res) do
 					_, err = self:commit(k)
-					_,_,plugin_name,container_name = k:find("DK:(.-):(.+)")
-					if plugin_name and container_name then
-						docker_configlist[#docker_configlist+1] = plugin_name .. ":" ..container_name
-					else
 						configlist[#configlist+1]=k
-					end
-					if err then
-						break
-					end
+					if err then	break	end
 				end
 			end
 		end
@@ -506,9 +485,6 @@ function Cursor.apply(self, rollback)
 		if not err then
 			if #configlist>0 then
 				cmd_err = self:_apply(configlist)
-			end
-			if #docker_configlist>0 then
-				dk_err = self:_apply_docker(docker_configlist)
 			end
 			cmd_err = cmd_err or 0
 			dk_err = dk_err or 0

@@ -54,6 +54,7 @@ enable() {
 }
 
 enabled() {
+	return 0
 	name="$(basename "${initscript}")"
 	[ -x "$IPKG_INSTROOT/etc/rc.d/S${START}${name##S[0-9][0-9]}" ]
 }
