@@ -11,21 +11,23 @@ export LUA_PATH="$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/ini
 export LUA_CPATH="$LUCI_SYSROOT/usr/lib/lua/?.so;;"
 export DYLD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH"
 
+installed_apk=$(apk info | sed ':a;N;s/\n/ /g;ta')
+
 merge() {
-  echo "merging plugin $1.."
+  echo "Merging plugin $1.."
   src=$1
   dst=$2
   mkdir -p $dst
     # 执行 preinst
-  [ -f $src/preinst ] && chmod +x $src/preinst && $src/preinst
+  [ -f "$src/preinst" ] && echo -e "\tExecuting preinst.."  && chmod +x $src/preinst && $src/preinst
   #合并root
-  [ -d $src/root ] && cp -R $src/root/. $dst/ &&\
+  [ -d "$src/root" ] && cp -R $src/root/. $dst/ &&\
   #合并config
   mkdir -p $dst/etc/config
-  if [ -d $src/root/etc/config ]; then
+  if [ -d "$src/root/etc/config" ]; then
     for cfg in $src/root/etc/config/*
     do
-      if [ -f $cfg ]; then
+      if [ -f "$cfg" ]; then
         cfg_name=$(echo $cfg | awk -F'/' '{print $NF}')
         [ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
       fi
@@ -33,13 +35,13 @@ merge() {
   fi
   # 合并 luasrc
   mkdir -p $dst/usr/lib/lua/luci/
-  [ -d $src/luasrc ] && cp -R $src/luasrc/. $dst/usr/lib/lua/luci/
+  [ -d "$src/luasrc" ] && cp -R $src/luasrc/. $dst/usr/lib/lua/luci/
   # 合并 htdoc
   mkdir -p $dst/www/
-  [ -d $src/htdoc ] && cp -R $src/htdoc/. $dst/www/
+  [ -d "$src/htdoc" ] && cp -R $src/htdoc/. $dst/www/
   # i18n
   mkdir -p $dst/usr/lib/lua/luci/i18n/
-  if [ -d $src/po ]; then
+  if [ -d "$src/po" ]; then
     for i18n in $src/po/*
     do
       for po in $i18n/*.po
@@ -50,41 +52,50 @@ merge() {
     done
   fi
   # 安装 depends
-  [ -f $src/depends.lst ] && depends=$(cat $src/depends.lst) && apk add $depends
+  [ -f "$src/depends.lst" ] && {
+    depends=$(cat $src/depends.lst)
+    for depend in $depends
+    do
+      [ -n "$(echo $depend | grep -E '^[^_]+')" ] && \
+      [ -z "$(echo $installed_apk | grep $depend)" ] && \
+      need_install="$need_install $depend"
+    done
+    [ -n "$need_install" ] && echo -e "\tInstalling depends.." && apk add $need_install
+  }
   # 执行 postinst
-  [ -f $src/postinst ] && chmod +x $src/postinst && $src/postinst
+  [ -f "$src/postinst" ] && echo -e "\tExecuting postinst.."  && chmod +x $src/postinst && $src/postinst
 }
 
 merge_luci_root() {
-  echo "merging luci root.."
+  echo "MERGING LUCI ROOT.."
   mkdir -p $LUCI_SYSROOT
   mkdir -p $PLUGIN_DIR
   mkdir -p $CONFIG_DIR/config
   rm -fr $LUCI_SYSROOT/*
 
-  echo "mergeing internal plugin.."
+  echo "MERGING INTERNAL PLUGIN.."
   for d in $INTERNAL_PLUGIN_DIR/*
   do
-    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_].+")
+    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
     [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
   done
 
-  echo "mergeing external plugin.."
+  echo "MERGING EXTERNAL PLUGIN.."
   for d in $PLUGIN_DIR/*
   do
-    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_].+")
+    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
     [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
   done
 }
 
 start_uhttpd() {
-  echo "starting uhttpd.."
+  echo "Starting uhttpd.."
   rm -fr /tmp/luci-*
   $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -h $LUCI_SYSROOT/www -f &
 }
 
 mount_config() {
-  echo "mounting config.."
+  echo "Mounting config.."
   mkdir -p /etc/config
   mkdir -p $CONFIG_DIR/config
   umount /etc/config 2&> /dev/null
