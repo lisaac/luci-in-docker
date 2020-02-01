@@ -44,10 +44,12 @@ merge() {
   if [ -d "$src/po" ]; then
     for i18n in $src/po/*
     do
-      for po in $i18n/*.po
+      for po in $i18n/*
       do
-        po_name=$(echo $po | awk -F'/' '{print $NF}' | awk -F'.' '{print $1}').$(echo $i18n | awk -F'/' '{print $NF}')
-        po2lmo $po $dst/usr/lib/lua/luci/i18n/$po_name.lmo
+        [ -n "$(echo $po | grep -E '.po$')" ] && {
+          po_name=$(echo $po | awk -F'/' '{print $NF}' | awk -F'.' '{print $1}').$(echo $i18n | awk -F'/' '{print $NF}')
+          po2lmo $po $dst/usr/lib/lua/luci/i18n/$po_name.lmo
+        }
       done
     done
   fi
@@ -86,6 +88,8 @@ merge_luci_root() {
     valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
     [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
   done
+
+  chmod +x $LUCI_SYSROOT/etc/init.d/*
 }
 
 start_uhttpd() {
