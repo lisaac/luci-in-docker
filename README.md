@@ -51,8 +51,6 @@ docker run -d \
   -v $HOME/pods/luci:/external:rslave \
   -v /media:/media:rshared \
   -v /dev:/dev:rslave \
-  -v /:/host:ro,rshared \
-  -v /usr/bin/docker:/usr/bin/docker \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --tmpfs /tmp:exec \
   --tmpfs /run \
@@ -92,7 +90,6 @@ docker restart luci
 git clone http://github.com/lisaac/luci-plugin-samba $HOME/pods/luci/plugin/luci-lib-docker
 docker restart luci
 ```
-
 
 ## 谢致
 - [openwrt/luci](https://github.com/openwrt/luci)
