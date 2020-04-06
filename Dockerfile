@@ -67,12 +67,13 @@ RUN apk update && \
 
 FROM alpine:latest
 
-ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_PLUGIN_DIR='/internal/plugin' 
+ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_PLUGIN_DIR='/internal/plugin' TZ=Asia/Shanghai
 
 RUN apk --no-cache update && \
     apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates tini && \
     mkdir -p $INTERNAL_PLUGIN_DIR $PLUGIN_DIR $CONFIG_DIR && \
-    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5
+    ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY init.sh /
 COPY --from=compile_stage /tmp/dst $INTERNAL_PLUGIN_DIR/

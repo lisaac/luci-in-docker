@@ -104,12 +104,21 @@ mount_config() {
   mkdir -p $CONFIG_DIR/config
   umount /etc/config 2&> /dev/null
   mount -o bind $CONFIG_DIR/config /etc/config
+  [ ! -f "$CONFIG_DIR/rc.local" ] && touch $CONFIG_DIR/rc.local
+  [ ! -f "/etc/rc.local" ] && touch /etc/rc.local
+  umount /etc/rc.local 2&> /dev/null
+  mount -o bind $CONFIG_DIR/rc.local /etc/rc.local
+}
+
+run_rcloal() {
+  chmod +x /etc/rc.local
+  /etc/rc.local
 }
 
 case $1 in
   start)         merge_luci_root; mount_config; start_uhttpd;;
   stop)          kill -9 $(pidof uhttpd) &> /dev/null;;
-  daemon)        merge_luci_root; mount_config; start_uhttpd; tail -f /dev/null;;
+  daemon)        merge_luci_root; mount_config; start_uhttpd; run_rcloal; tail -f /dev/null;;
   restart)       kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
   merge)         merge;;
   *)             kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;

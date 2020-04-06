@@ -1456,9 +1456,7 @@ footer {
 	pointer-events: none;
 	opacity: .6;
 }
-.nowrap {
-	white-space: nowrap;
-}
+
 input[type="text"] + .cbi-button,
 input[type="password"] + .cbi-button,
 select + .cbi-button {
@@ -1894,6 +1892,7 @@ table table td,
 
 .network-status-table .ifacebox-body > span {
 	flex: 10 10 auto;
+	height: 100%;
 }
 
 .network-status-table .ifacebox-body > div {
