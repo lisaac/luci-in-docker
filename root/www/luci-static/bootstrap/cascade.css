@@ -175,7 +175,7 @@ body {
 
 .container {
 	width: 100%;
-	max-width: 940px;
+	max-width: 1140px;
 	margin-left: auto;
 	margin-right: auto;
 	zoom: 1;
@@ -1544,6 +1544,10 @@ select + .cbi-button {
 	background-image: none;
 	opacity: 0.65;
 	box-shadow: none;
+}
+
+.nowrap {
+	white-space: nowrap;
 }
 
 .btn[disabled] {
