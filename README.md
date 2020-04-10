@@ -1,9 +1,8 @@
-## 关于 LuCI in Docker
-在使用 `Docker` 的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将 `luci` 装入容器，配合 [`luci-lib-docker`](https://github.com/lisaac/luci-lib-docker) 以进行 `Docker` 容器的配置文件管理
-
-`luci-in-docker` 将 `openwrt` 中 `ubus` 去除，宿主为 `alpine`，方便后期增加插件
-
-`luci-in-docker` 目的是将家用 `NAS` 服务全部部署在 `Docker` 中，并通过 `luci` 进行管理，从而实现 `NAS IN DOCKER`
+# LuCI in Docker
+- 在使用 `Docker` 的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将 `luci` 装入容器，配合 [`luci-lib-docker`](https://github.com/lisaac/luci-lib-docker) 以进行 `Docker` 容器的配置文件管理
+- `luci-in-docker` 将 `openwrt` 中 `ubus` 去除，宿主为 `alpine`，方便后期增加插件
+- `luci-in-docker` 目的是将家用 `NAS` 服务全部部署在 `Docker` 中，并通过 `luci` 进行管理，从而实现 `NAS IN DOCKER`
+- [TG 群组](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
 
 ## 运行容器
 ```
@@ -30,7 +29,6 @@ docker run -d \
 - 插件中依赖文件 `depends.lst` 为 `alpine` 依赖，并非 `openwrt` 中的依赖
 - 插件中的 `preinst`及 `postinst` 是在遍历插件目录执行的，可能执行 `preinst` 及 `postinst` 存在依赖其他插件的情况，可以将插件目录开头的加上数字，来确定遍历顺序
 - 插件目录名若以 `_` 开头，则会跳过此插件
-
 
 ## 目录结构
 ```
