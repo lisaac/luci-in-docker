@@ -1,8 +1,9 @@
 # LuCI in Docker
+[![License](https://img.shields.io/github/license/lisaac/luci-in-docker?style=flat-square)](https://github.com/lisaac/luci-in-docker/blob/master/LICENSE)
+[![Telegram Group](https://img.shields.io/badge/telegam-group-_?style=flat-square)](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
 - 在使用 `Docker` 的过程中，很多容器的配置文件需要管理，使用过程中不少人对命令行及配置文件不熟悉，所以考虑将 `luci` 装入容器，配合 [`luci-lib-docker`](https://github.com/lisaac/luci-lib-docker) 以进行 `Docker` 容器的配置文件管理
 - `luci-in-docker` 将 `openwrt` 中 `ubus` 去除，宿主为 `alpine`，方便后期增加插件
 - `luci-in-docker` 目的是将家用 `NAS` 服务全部部署在 `Docker` 中，并通过 `luci` 进行管理，从而实现 `NAS IN DOCKER`
-- [TG 群组](https://t.me/joinchat/G5mqjhrlU9S8TMkXeBmj0w)
 
 ## 运行容器
 ```
