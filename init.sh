@@ -90,6 +90,11 @@ merge_luci_root() {
   done
 
   chmod +x $LUCI_SYSROOT/etc/init.d/*
+  
+  echo "Mounting rc.common.."
+  touch /etc/rc.common
+  umount /etc/rc.common 2&> /dev/null
+  mount -o bind $LUCI_SYSROOT/etc/rc.common /etc/rc.common
 }
 
 start_uhttpd() {
