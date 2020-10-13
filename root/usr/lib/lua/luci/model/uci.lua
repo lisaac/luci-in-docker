@@ -1,89 +1,254 @@
---[[
-LuCI - UCI model
+-- Copyright 2008 Steven Barth <steven@midlink.org>
+-- Licensed to the public under the Apache License 2.0.
 
-Description:
-Generalized UCI model
-
-FileId:
-$Id$
-
-License:
-Copyright 2008 Steven Barth <steven@midlink.org>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-]]--
 local os    = require "os"
-local uci   = require "uci"
 local util  = require "luci.util"
 local table = require "table"
-local SYSROOT = os.getenv("LUCI_SYSROOT")
+local xuci   = require "uci"
 
 local setmetatable, rawget, rawset = setmetatable, rawget, rawset
-local require, getmetatable = require, getmetatable
-local error, pairs, ipairs = error, pairs, ipairs
+local require, getmetatable, assert = require, getmetatable, assert
+local error, pairs, ipairs, select = error, pairs, ipairs, select
 local type, tostring, tonumber, unpack = type, tostring, tonumber, unpack
 
---- LuCI UCI model library.
 -- The typical workflow for UCI is:  Get a cursor instance from the
 -- cursor factory, modify data (via Cursor.add, Cursor.delete, etc.),
 -- save the changes to the staging area via Cursor.save and finally
 -- Cursor.commit the data to the actual config files.
--- LuCI then needs to Cursor.apply the changes so deamons etc. are
+-- LuCI then needs to Cursor.apply the changes so daemons etc. are
 -- reloaded.
--- @cstyle	instance
 module "luci.model.uci"
 
---- Create a new UCI-Cursor.
--- @class function
--- @name cursor
--- @return	UCI-Cursor
-cursor = uci.cursor
+local ERRSTR = {
+	"Invalid command",
+	"Invalid argument",
+	"Method not found",
+	"Entry not found",
+	"No data",
+	"Permission denied",
+	"Timeout",
+	"Not supported",
+	"Unknown error",
+	"Connection failed"
+}
 
-APIVERSION = uci.APIVERSION
+local session_id = nil
 
---- Create a new Cursor initialized to the state directory.
--- @return UCI cursor
-function cursor_state()
-	return cursor(nil, "/var/state")
+local function call(cmd, arg1, arg2, arg3, arg4)
+	local xcursor = xuci.cursor()
+	if not arg1 then
+		return xcursor[cmd]()
+	elseif not arg2 then
+		return xcursor[cmd](arg1)
+	elseif not arg3 then
+		return xcursor[cmd](arg1, arg2)
+	elseif not arg4 then
+		return xcursor[cmd](arg1, arg2, arg3)
+	else
+		return xcursor[cmd](arg1, arg2, arg3, arg4)
+	end
 end
 
+function cursor()
+	return _M
+end
 
-inst = cursor()
-inst_state = cursor_state()
+function cursor_state()
+	return _M
+end
 
-local Cursor = getmetatable(inst)
+function substate(self)
+	return self
+end
 
---- Applies UCI configuration changes
--- @param configlist		List of UCI configurations
--- @param command			Don't apply only return the command
--- function Cursor.apply(self, configlist, command)
--- 	configlist = self:_affected(configlist)
--- 	if command then
--- 		return { SYSROOT .. "/sbin/luci-reload", unpack(configlist) }
--- 	else
--- 		return os.execute( SYSROOT .. "/sbin/luci-reload %s >/dev/null 2>&1"
--- 			% table.concat(configlist, " "))
--- 	end
--- end
+function get_confdir(self)
+	return call("get_confdir")
+end
 
+function get_savedir(self)
+	return call("get_savedir")
+end
 
---- Delete all sections of a given type that match certain criteria.
--- @param config		UCI config
--- @param type			UCI section type
--- @param comparator	Function that will be called for each section and
--- returns a boolean whether to delete the current section (optional)
-function Cursor.delete_all(self, config, stype, comparator)
+function get_session_id(self)
+	return session_id
+end
+
+function set_session_id(self, id)
+	session_id = id
+	return true
+end
+
+function set_confdir(self, directory)
+	return call("set_confdir", directory)
+end
+
+function set_savedir(self, directory)
+	return call("set_savedir", directory)
+end
+
+function load(self, config)
+	return call("load", config)
+end
+
+function save(self, config)
+	return call("save", config)
+end
+
+function unload(self, config)
+	return call("unload", config)
+end
+
+function changes(self, config)
+	return call("changes", config)
+end
+
+function revert(self, config)
+	return call("revert", config)
+end
+
+function commit(self, config)
+	return call("commit", config)
+end
+
+function get_all(self, config, section)
+	return call("get_all", config, section)
+end
+
+function add(self, config, stype)
+	return call("add", config, stype)
+end
+
+function delete(self, config, section, option)
+	return call("delete",  config, section, option)
+end
+
+local function _get(self, operation, config, section, option)
+	if section == nil then
+		return nil
+	elseif type(option) == "string" and option:byte(1) ~= 46 then
+		return call(operation, config, section, option)
+	elseif option == nil then
+		local values = self:get_all(config, section)
+		if values then
+			return values[".type"], values[".name"]
+		else
+			return nil
+		end
+	else
+		return false, "Invalid argument"
+	end
+end
+
+function get(self, ...)
+	return _get(self, "get", ...)
+end
+
+function get_state(self, ...)
+	return _get(self, "state", ...)
+end
+
+function get_bool(self, ...)
+	local val = self:get(...)
+	return (val == "1" or val == "true" or val == "yes" or val == "on")
+end
+
+function foreach(self, config, stype, callback)
+	return call("foreach",  config, stype, callback)
+end
+
+function get_first(self, config, stype, option, default)
+	local rv = default
+
+	local _, err = self:foreach(config, stype, function(s)
+		local val = not option and s[".name"] or s[option]
+
+		if type(default) == "number" then
+			val = tonumber(val)
+		elseif type(default) == "boolean" then
+			val = (val == "1" or val == "true" or
+						val == "yes" or val == "on")
+		end
+
+		if val ~= nil then
+			rv = val
+			return false
+		end
+	end)
+
+	return rv, err
+end
+
+function get_list(self, config, section, option)
+	if config and section and option then
+		local val, err = self:get(config, section, option)
+		return (type(val) == "table" and val or { val }), err
+	end
+	return { }
+end
+
+function section(self, config, stype, name, values)
+	local stat = true
+	if name then
+		stat = call("set", config, name, stype)
+	else
+		name = self:add(config, stype)
+		stat = name and true
+	end
+
+	if stat and values then
+		stat = self:tset(config, name, values)
+	end
+
+	return stat and name
+end
+
+function set(self, config, section, option, values)
+	if not values then
+		local sname, err = self:section(config, option, section)
+		return (not not sname), err
+	else
+		return call("set", config, section, option, values )
+	end
+end
+
+function set_list(self, config, section, option, value)
+	if section == nil or option == nil then
+		return false
+	elseif value == nil or (type(value) == "table" and #value == 0) then
+		return self:delete(config, section, option)
+	elseif type(value) == "table" then
+		return self:set(config, section, option, value)
+	else
+		return self:set(config, section, option, { value })
+	end
+end
+
+function tset(self, config, section, v)
+	local stat = true
+	for k, v in pairs(v) do
+		if k:sub(1, 1) ~= "." then
+			stat = stat and call("set", config, section, k, v)
+		end
+	end
+	return stat
+end
+
+function reorder(self, config, section, index)
+	local stat = true
+	if type(section) == "string" and type(index) == "number" then
+		return call("reorder", config, section, index)
+	elseif type(section) == "table" then
+		local sid, idx
+		for idx , sid in pairs(section) do
+			stat = stat and call("reorder", config, sid, idx)
+		end
+	else
+		return false, "Invalid argument"
+	end
+	return stat
+end
+
+function delete_all(self, config, stype, comparator)
 	local del = {}
 
 	if type(comparator) == "table" then
@@ -112,115 +277,11 @@ function Cursor.delete_all(self, config, stype, comparator)
 	end
 end
 
---- Create a new section and initialize it with data.
--- @param config	UCI config
--- @param type		UCI section type
--- @param name		UCI section name (optional)
--- @param values	Table of key - value pairs to initialize the section with
--- @return			Name of created section
-function Cursor.section(self, config, type, name, values)
-	local stat = true
-	if name then
-		stat = self:set(config, name, type)
-	else
-		name = self:add(config, type)
-		stat = name and true
-	end
-
-	if stat and values then
-		stat = self:tset(config, name, values)
-	end
-
-	return stat and name
-end
-
---- Updated the data of a section using data from a table.
--- @param config	UCI config
--- @param section	UCI section name (optional)
--- @param values	Table of key - value pairs to update the section with
-function Cursor.tset(self, config, section, values)
-	local stat = true
-	for k, v in pairs(values) do
-		if k:sub(1, 1) ~= "." then
-			stat = stat and self:set(config, section, k, v)
-		end
-	end
-	return stat
-end
-
---- Get a boolean option and return it's value as true or false.
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option
--- @return			Boolean
-function Cursor.get_bool(self, ...)
-	local val = self:get(...)
-	return ( val == "1" or val == "true" or val == "yes" or val == "on" )
-end
-
---- Get an option or list and return values as table.
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option
--- @return			UCI value
-function Cursor.get_list(self, config, section, option)
-	if config and section and option then
-		local val = self:get(config, section, option)
-		return ( type(val) == "table" and val or { val } )
-	end
-	return nil
-end
-
---- Get the given option from the first section with the given type.
--- @param config	UCI config
--- @param type		UCI section type
--- @param option	UCI option (optional)
--- @param default	Default value (optional)
--- @return			UCI value
-function Cursor.get_first(self, conf, stype, opt, def)
-	local rv = def
-
-	self:foreach(conf, stype,
-		function(s)
-			local val = not opt and s['.name'] or s[opt]
-
-			if type(def) == "number" then
-				val = tonumber(val)
-			elseif type(def) == "boolean" then
-				val = (val == "1" or val == "true" or
-				       val == "yes" or val == "on")
-			end
-
-			if val ~= nil then
-				rv = val
-				return false
-			end
-		end)
-
-	return rv
-end
-
---- Set given values as list.
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option
--- @param value		UCI value
--- @return			Boolean whether operation succeeded
-function Cursor.set_list(self, config, section, option, value)
-	if config and section and option then
-		return self:set(
-			config, section, option,
-			( type(value) == "table" and value or { value } )
-		)
-	end
-	return false
-end
-
 -- Return a list of initscripts affected by configuration changes.
-function Cursor._affected(self, configlist)
+local function _affected(self, configlist)
 	configlist = type(configlist) == "table" and configlist or {configlist}
 
-	local c = cursor()
+	local c = xuci.cursor()
 	c:load("ucitrack")
 
 	-- Resolve dependencies
@@ -260,306 +321,59 @@ function Cursor._affected(self, configlist)
 	return reloadlist
 end
 
---- Create a sub-state of this cursor. The sub-state is tied to the parent
--- curser, means it the parent unloads or loads configs, the sub state will
--- do so as well.
--- @return			UCI state cursor tied to the parent cursor
-function Cursor.substate(self)
-	Cursor._substates = Cursor._substates or { }
-	Cursor._substates[self] = Cursor._substates[self] or cursor_state()
-	return Cursor._substates[self]
-end
-
-local _load = Cursor.load
-function Cursor.load(self, ...)
-	if Cursor._substates and Cursor._substates[self] then
-		_load(Cursor._substates[self], ...)
-	end
-	return _load(self, ...)
-end
-
-local _unload = Cursor.unload
-function Cursor.unload(self, ...)
-	if Cursor._substates and Cursor._substates[self] then
-		_unload(Cursor._substates[self], ...)
-	end
-	return _unload(self, ...)
-end
-
-
---- Add an anonymous section.
--- @class function
--- @name Cursor.add
--- @param config	UCI config
--- @param type		UCI section type
--- @return			Name of created section
-
---- Get a table of saved but uncommitted changes.
--- @class function
--- @name Cursor.changes
--- @param config	UCI config
--- @return			Table of changes
--- @see Cursor.save
-
---- Commit saved changes.
--- @class function
--- @name Cursor.commit
--- @param config	UCI config
--- @return			Boolean whether operation succeeded
--- @see Cursor.revert
--- @see Cursor.save
-
---- Deletes a section or an option.
--- @class function
--- @name Cursor.delete
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option (optional)
--- @return			Boolean whether operation succeeded
-
---- Call a function for every section of a certain type.
--- @class function
--- @name Cursor.foreach
--- @param config	UCI config
--- @param type		UCI section type
--- @param callback	Function to be called
--- @return			Boolean whether operation succeeded
-
---- Get a section type or an option
--- @class function
--- @name Cursor.get
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option (optional)
--- @return			UCI value
-
---- Get all sections of a config or all values of a section.
--- @class function
--- @name Cursor.get_all
--- @param config	UCI config
--- @param section	UCI section name (optional)
--- @return			Table of UCI sections or table of UCI values
-
---- Manually load a config.
--- @class function
--- @name Cursor.load
--- @param config	UCI config
--- @return			Boolean whether operation succeeded
--- @see Cursor.save
--- @see Cursor.unload
-
---- Revert saved but uncommitted changes.
--- @class function
--- @name Cursor.revert
--- @param config	UCI config
--- @return			Boolean whether operation succeeded
--- @see Cursor.commit
--- @see Cursor.save
-
---- Saves changes made to a config to make them committable.
--- @class function
--- @name Cursor.save
--- @param config	UCI config
--- @return			Boolean whether operation succeeded
--- @see Cursor.load
--- @see Cursor.unload
-
---- Set a value or create a named section.
--- @class function
--- @name Cursor.set
--- @param config	UCI config
--- @param section	UCI section name
--- @param option	UCI option or UCI section type
--- @param value		UCI value or nil if you want to create a section
--- @return			Boolean whether operation succeeded
-
---- Get the configuration directory.
--- @class function
--- @name Cursor.get_confdir
--- @return			Configuration directory
-
---- Get the directory for uncomitted changes.
--- @class function
--- @name Cursor.get_savedir
--- @return			Save directory
-
---- Set the configuration directory.
--- @class function
--- @name Cursor.set_confdir
--- @param directory	UCI configuration directory
--- @return			Boolean whether operation succeeded
-
---- Set the directory for uncommited changes.
--- @class function
--- @name Cursor.set_savedir
--- @param directory	UCI changes directory
--- @return			Boolean whether operation succeeded
-
---- Discard changes made to a config.
--- @class function
--- @name Cursor.unload
--- @param config	UCI config
--- @return			Boolean whether operation succeeded
--- @see Cursor.load
--- @see Cursor.save
-
-function _get_rollback_section()
-	local sauth = require "luci.sauth"
-	local sid = "00000000000000000000000000000000"
-	local sdat = sauth.read(sid)
-
-	if type(sdat) == "table" and
-		 type(sdat.token) == "string"
-	then
-		return {values={rollback={token=sdat.token,session=sdat.sid,timeout=sdat.timeout}}}
-	end
-	return nil, nil
-end
-
-function _setup_rollback_section()
-	local sauth = require "luci.sauth"
-	local sid = "00000000000000000000000000000000"
-	local token = luci.sys.uniqueid(16)
-	sauth.reap()
-	sauth.write(sid, {
-		timeout=now + timeout,
-		token=token
-	})
-	return token
-end
-
-function _clear_rollback_section()
-	local sauth = require "luci.sauth"
-	local sid = "00000000000000000000000000000000"
-	sauth.reap()
-	sauth.kill(sid)
-end
-
-function _setup_rollback_section()
-	--TODO:
-end
-
---- Applies UCI configuration changes
+-- Applies UCI configuration changes
 -- @param configlist		List of UCI configurations
 -- @param command			Don't apply only return the command
-function Cursor._apply(self, configlist, command)
-	configlist = self:_affected(configlist)
+local function _apply(self, configlist, command)
+	local SYSROOT = os.getenv("LUCI_SYSROOT")
+	configlist = _affected(configlist)
 	if command then
 		return { SYSROOT .. "/sbin/luci-reload", unpack(configlist) }
 	else
-		 os.execute( SYSROOT .. "/sbin/luci-reload %s >/dev/null 2>&1"
+		os.execute( SYSROOT .. "/sbin/luci-reload %s >/dev/null 2>&1"
 			% table.concat(configlist, " "))
 			return 0
 	end
 end
 
-function Cursor.apply(self, rollback)
-	local _, err
+function apply(self, rollback)
+	local rv, err
+	local configlist = {}
+	rv, err = self:changes()
 
-	if rollback then
-		local sys = require "luci.sys"
-		local conf = require "luci.config"
-		local timeout = tonumber(conf and conf.apply and conf.apply.rollback or 30) or 0
-
-		_, err = _setup_rollback((timeout > 30) and timeout or 30)
-
-		if not err then
-			local now = os.time()
-			local token = _setup_rollback_section()
-			return token
-		end
-	else
-		res, err = self:changes()
-		local configlist = {}
-		if not err then
-			if type(res) == "table" then
-				local k, v
-				for k, v in pairs(res) do
-					_, err = self:commit(k)
-						configlist[#configlist+1]=k
-					if err then	break	end
-				end
+	if not err then
+		if type(rv) == "table" then
+			local k
+			for k in pairs(rv) do
+				rv, err = call("commit", k)
+				configlist[#configlist+1] = k
+				if err then break	end
 			end
 		end
+	end
 
-		if not err then
-			if #configlist>0 then
-				cmd_err = self:_apply(configlist)
-			end
-			cmd_err = cmd_err or 0
-			dk_err = dk_err or 0
-			err= (err==0) or dk_err
-			if err == 0 then
-				err = "No data"
-			else
-				err = "Apply command failed"
-			end
+	if not err then
+		if #configlist > 0 then
+			err = _apply(configlist)
+		end
+		if err == 0 then
+			err = "No data"
+		else
+			err = "Apply command failed"
 		end
 	end
 
 	return (err == nil), err
 end
 
-function _confirm_rollback_stats()
-	--TODO:
+function confirm(self, token)
+	return true
 end
 
-function Cursor.confirm(self, token)
-	local is_pending, time_remaining, rollback_sid, rollback_token = self:rollback_pending()
-
-	if is_pending then
-		if token ~= rollback_token then
-			return false, "Permission denied"
-		end
-
-		local _, err = _confirm_rollback_stats(rollback_sid)
-
-		if not err then
-			_clear_rollback_section()
-		end
-
-		return (err == nil), err
-	end
-
-	return false, "No data"
+function rollback(self)
+	return true
 end
 
-function _setup_rollback()
-	--TODO:
-end
-
-function Cursor.rollback(self)
-	local is_pending, time_remaining, rollback_sid = self:rollback_pending()
-
-	if is_pending then
-		local _, err = _setup_rollback(rollback_sid)
-
-		if not err then
-			_clear_rollback_section()
-		end
-
-end
-
-	return false, "No data"
-end
-
-function Cursor.rollback_pending(self)
-	local rv, err = _get_rollback_section()
-	local now = os.time()
-
-	if type(rv) == "table" and
-	   type(rv.values) == "table" and
-	   type(rv.values.rollback) == "table" and
-	   type(rv.values.rollback.token) == "string" and
-	   type(rv.values.rollback.session) == "string" and
-	   type(rv.values.rollback.timeout) == "number" and
-	   rv.values.rollback.timeout > now
-	then
-		return true,
-			rv.values.rollback.timeout - now,
-			rv.values.rollback.session,
-			rv.values.rollback.token
-	end
-
-	return false, err
+function rollback_pending(self)
+	return true
 end

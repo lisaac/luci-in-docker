@@ -1460,6 +1460,7 @@ footer {
 input[type="text"] + .cbi-button,
 input[type="password"] + .cbi-button,
 select + .cbi-button {
+	position: absolute;
 	border-radius: 0 3px 3px 0;
 	border-color: #ccc;
 	margin: 0 0 1px -2px;

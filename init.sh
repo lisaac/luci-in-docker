@@ -36,9 +36,9 @@ merge() {
   # 合并 luasrc
   mkdir -p $dst/usr/lib/lua/luci/
   [ -d "$src/luasrc" ] && cp -R $src/luasrc/. $dst/usr/lib/lua/luci/
-  # 合并 htdoc
+  # 合并 htdocs
   mkdir -p $dst/www/
-  [ -d "$src/htdoc" ] && cp -R $src/htdoc/. $dst/www/
+  [ -d "$src/htdocs" ] && cp -R $src/htdocs/. $dst/www/
   # i18n
   mkdir -p $dst/usr/lib/lua/luci/i18n/
   if [ -d "$src/po" ]; then

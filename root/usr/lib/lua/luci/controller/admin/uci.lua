@@ -58,7 +58,6 @@ function action_revert()
 	})
 end
 
-
 local function ubus_state_to_http(errstr)
 	local map = {
 		["Invalid command"]   = 400,
@@ -73,7 +72,7 @@ local function ubus_state_to_http(errstr)
 		["Connection failed"] = 503
 	}
 
-	local code = map[errstr] or 200
+	local code = map[errstr] or 204
 	local msg  = errstr      or "OK"
 
 	luci.http.status(code, msg)
