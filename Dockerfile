@@ -1,6 +1,6 @@
 FROM alpine:latest as compile_stage
 
-MAINTAINER lisaac <lisaac.cn@gmail.com>
+LABEL maintainer='lisaac <lisaac.cn@gmail.com>'
 
 ENV DST_LUCI_ROOT='/tmp/dst/luci/root'
 
@@ -12,29 +12,35 @@ RUN apk update && \
     apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
     cd /tmp && git clone https://git.openwrt.org/project/libubox.git && \
-    cd /tmp/libubox && git checkout 43a103ff17ee5872669f8712606578c90c14591d && \
+    cd /tmp/libubox && \
+    # git checkout 43a103ff17ee5872669f8712606578c90c14591d && \
     cmake . && make && make install && \
     # uci
     cd /tmp && git clone https://git.openwrt.org/project/uci.git && \
-    cd /tmp/uci && git checkout 165b444131453d63fc78c1d86f23c3ca36a2ffd7 && \
+    cd /tmp/uci && \
+    # git checkout 165b444131453d63fc78c1d86f23c3ca36a2ffd7 && \
     cmake . && make && \
     # ustream-ssl
     cd /tmp && git clone https://git.openwrt.org/project/ustream-ssl.git && \
-    cd /tmp/ustream-ssl && git checkout 30cebb4fc78e49e0432a404f7c9dd8c9a93b3cc3 && \
+    cd /tmp/ustream-ssl && \
+    # git checkout 30cebb4fc78e49e0432a404f7c9dd8c9a93b3cc3 && \
     cmake . && make && make install && \
     # uhttpd
     cd /tmp && git clone https://git.openwrt.org/project/uhttpd.git && \
-    cd /tmp/uhttpd && git checkout 5f9ae5738372aaa3a6be2f0a278933563d3f191a && \
+    cd /tmp/uhttpd && \
+    # git checkout 5f9ae5738372aaa3a6be2f0a278933563d3f191a && \
     sed -i 's/clearenv();/\/\/clearenv();/g' cgi.c && \
     cmake -DUBUS_SUPPORT=OFF . && make && cd /tmp && \
     # libnl-tiny
     cd /tmp && git clone https://git.openwrt.org/project/libnl-tiny.git && \
-    cd /tmp/libnl-tiny && git checkout 0219008cc8767655d7e747497e8e1133a3e8f840 && \
+    cd /tmp/libnl-tiny && \
+    # git checkout 0219008cc8767655d7e747497e8e1133a3e8f840 && \
     cmake . && make && \
     mkdir -p /usr/lib && cp *.so /usr/lib/ && cp -R /tmp/libnl-tiny/include/* /usr/include/ && \
     # liblucihttp
     cd /tmp/ && git clone https://github.com/jow-/lucihttp.git && \
-    cd /tmp/lucihttp && git checkout a34a17d501c0e23f0a91dd9d3e87697347c861ba && \
+    cd /tmp/lucihttp && \
+    # git checkout a34a17d501c0e23f0a91dd9d3e87697347c861ba && \
     cmake . && make && \
     # luci
     cd /tmp && git clone https://github.com/openwrt/luci.git && \
