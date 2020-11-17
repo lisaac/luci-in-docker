@@ -78,15 +78,23 @@ merge_luci_root() {
   echo "MERGING INTERNAL PLUGIN.."
   for d in $INTERNAL_PLUGIN_DIR/*
   do
-    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
-    [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
+    local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
+    [ -n "$valid_d" ] && \
+    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';' | head -n 1)
+      # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
+    [ -n "$valid_d2" ] && \
+    merge $valid_d2 $LUCI_SYSROOT
   done
 
   echo "MERGING EXTERNAL PLUGIN.."
   for d in $PLUGIN_DIR/*
   do
-    valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
-    [ -n "$valid_d" ] && merge $d $LUCI_SYSROOT
+    local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
+    [ -n "$valid_d" ] && \
+    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';' | head -n 1)
+    # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
+    [ -n "$valid_d2" ] && \
+    merge $valid_d2 $LUCI_SYSROOT
   done
 
   chmod +x $LUCI_SYSROOT/etc/init.d/*
