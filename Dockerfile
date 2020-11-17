@@ -9,12 +9,12 @@ RUN apk --no-cache update && \
     git clone https://github.com/lisaac/luci-app-dockerman.git && \
     git clone https://github.com/lisaac/luci-app-diskman.git && \
     mkdir -p /plugin && \
-    cp -R /tmp/luci-app-dockerman/collections/luci-lib-docker       /plugin/luci-lib-docker && \
+    cp -R /tmp/luci-lib-docker /collections/luci-lib-docker       /plugin/luci-lib-docker && \
     cp -R /tmp/luci-app-dockerman/applications/luci-app-dockerman   /plugin/luci-app-dockerman && \
-    cp -R /tmp/luci-app-dockerman/applications/luci-app-diskman     /plugin/luci-app-diskman && \
-    cp -R /tmp/luci-app-dockerman/applications/luci-app-podclash    /plugin/luci-app-podclash
-    # cp -R /tmp/luci-app-dockerman/applications/luci-app-podsamba    /plugin/luci-app-podsamba && \
-    # cp -R /tmp/luci-app-dockerman/applications/luci-app-podminidlna /plugin/luci-app-podminidlna
+    cp -R /tmp/luci-app-diskman/applications/luci-app-diskman     /plugin/luci-app-diskman && \
+    cp -R /tmp/luci-app-podclash/applications/luci-app-podclash    /plugin/luci-app-podclash
+    # cp -R /tmp/luci-app-podsamba/applications/luci-app-podsamba    /plugin/luci-app-podsamba && \
+    # cp -R /tmp/luci-app-podminidlna/applications/luci-app-podminidlna /plugin/luci-app-podminidlna
 
 FROM lisaac/luci:nano
 
