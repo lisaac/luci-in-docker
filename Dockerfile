@@ -16,7 +16,7 @@ RUN apk --no-cache update && \
     # cp -R /tmp/luci-app-dockerman/applications/luci-app-podsamba    /plugin/luci-app-podsamba && \
     # cp -R /tmp/luci-app-dockerman/applications/luci-app-podminidlna /plugin/luci-app-podminidlna
 
-FROM lisaac/luci:minial
+FROM lisaac/luci:nano
 
 ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_PLUGIN_DIR='/internal/plugin' TZ=Asia/Shanghai
 
