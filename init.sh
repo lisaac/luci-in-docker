@@ -151,10 +151,10 @@ update_internal_plugin(){
   wget ${diskman} -O ${tmp_dir}/diskman.zip
   unzip ${tmp_dir}/diskman.zip "*/applications/luci-app-diskman/*" -o -d ${tmp_dir}
 
-  echo "Updating podclash.."
-  local podclash="https://github.com/lisaac/luci-app-podclash/archive/main.zip"
-  wget ${podclash} -O ${tmp_dir}/podclash.zip
-  unzip ${tmp_dir}/podclash.zip "*/applications/luci-app-podclash/*" -o -d ${tmp_dir}
+  # echo "Updating podclash.."
+  # local podclash="https://github.com/lisaac/luci-app-podclash/archive/main.zip"
+  # wget ${podclash} -O ${tmp_dir}/podclash.zip
+  # unzip ${tmp_dir}/podclash.zip "*/applications/luci-app-podclash/*" -o -d ${tmp_dir}
 
   cp -R ${tmp_dir}/*/applications/* ${INTERNAL_PLUGIN_DIR}
   cp -R ${tmp_dir}/*/collections/* ${INTERNAL_PLUGIN_DIR}
