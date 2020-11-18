@@ -30,6 +30,9 @@ merge() {
       if [ -f "$cfg" ]; then
         cfg_name=$(echo $cfg | awk -F'/' '{print $NF}')
         [ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
+      elif [ -d "$cfg" ]; then
+        cfg_name=$(basename $cfg)
+        [ ! -d $CONFIG_DIR/config/$cfg_name ] && cp -R $cfg $CONFIG_DIR/config/
       fi
     done
   fi

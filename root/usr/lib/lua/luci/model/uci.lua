@@ -278,7 +278,7 @@ function delete_all(self, config, stype, comparator)
 end
 
 -- Return a list of initscripts affected by configuration changes.
-local function _affected(self, configlist)
+local function _affected(configlist)
 	configlist = type(configlist) == "table" and configlist or {configlist}
 
 	local c = xuci.cursor()
@@ -324,7 +324,7 @@ end
 -- Applies UCI configuration changes
 -- @param configlist		List of UCI configurations
 -- @param command			Don't apply only return the command
-local function _apply(self, configlist, command)
+local function _apply(configlist, command)
 	local SYSROOT = os.getenv("LUCI_SYSROOT")
 	configlist = _affected(configlist)
 	if command then
