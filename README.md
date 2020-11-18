@@ -53,7 +53,7 @@ docker run -d \
       |-config        # UCI cofnig 目录，用于存放配置文件，启动后挂载至/etc/config
     |-plugin          # 插件目录
       |-luci-app-diskman    # 插件，会忽略以 _ 开头的目录，方便调试，插件结构如下：
-        |-makefile    # 判定有效插件目录标志
+        |-Makefile    # 判定有效插件目录标志
         |-root        # 插件所需的 root 目录，合并至/tmp/.luci/
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
@@ -65,7 +65,7 @@ docker run -d \
   |- internal         # 内部 luci-in-docker 自带插件目录(用户无需关心)
     |-plugin          # 内部插件目录
       |-luci          # luci 目录
-        |-makefile    # 判定有效插件目录标志
+        |-Makefile    # 判定有效插件目录标志
         |-root        # 插件所需的 root 目录，合并至/tmp/.luci/
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
         |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
