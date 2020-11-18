@@ -1,7 +1,5 @@
 FROM alpine:latest as compile_stage
 
-LABEL maintainer='lisaac <lisaac.cn@gmail.com>'
-
 ENV DST_LUCI_ROOT='/tmp/dst/luci/root'
 
 COPY root $DST_LUCI_ROOT
@@ -74,6 +72,8 @@ RUN apk update && \
     touch /tmp/dst/luci/Makefile
 
 FROM alpine:latest
+
+LABEL maintainer='lisaac <lisaac.cn@gmail.com>'
 
 ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_PLUGIN_DIR='/internal/plugin' TZ=Asia/Shanghai
 

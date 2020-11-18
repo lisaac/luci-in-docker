@@ -128,11 +128,43 @@ run_rcloal() {
   /etc/rc.local
 }
 
+update_internal_plugin(){
+  echo "Updating internal plugins.."
+  local tmp_dir="/tmp/plugin"
+  mkdir -p ${tmp_dir}
+
+  echo "Updating dockerman.."
+  local dockerman="https://github.com/lisaac/luci-app-dockerman/archive/master.zip"
+  wget ${dockerman} -O ${tmp_dir}/dockerman.zip
+  unzip ${tmp_dir}/dockerman.zip "*/applications/luci-app-dockerman/*" -o -d ${tmp_dir}
+
+  echo "Updating lib-docker.."
+  local libdocker="https://github.com/lisaac/luci-lib-docker/archive/master.zip"
+  wget ${libdocker} -O ${tmp_dir}/libdocker.zip
+  unzip ${tmp_dir}/libdocker.zip "*/collections/luci-lib-docker/*" -o -d ${tmp_dir}
+
+  echo "Updating diskman.."
+  local diskman="https://github.com/lisaac/luci-app-diskman/archive/master.zip"
+  wget ${diskman} -O ${tmp_dir}/diskman.zip
+  unzip ${tmp_dir}/diskman.zip "*/applications/luci-app-diskman/*" -o -d ${tmp_dir}
+
+  echo "Updating podclash.."
+  local podclash="https://github.com/lisaac/luci-app-podclash/archive/main.zip"
+  wget ${podclash} -O ${tmp_dir}/podclash.zip
+  unzip ${tmp_dir}/podclash.zip "*/applications/luci-app-podclash/*" -o -d ${tmp_dir}
+
+  cp -R ${tmp_dir}/*/applications/* ${INTERNAL_PLUGIN_DIR}
+  cp -R ${tmp_dir}/*/collections/* ${INTERNAL_PLUGIN_DIR}
+
+  rm -fr ${tmp_dir}
+}
+
 case $1 in
   start)         merge_luci_root; mount_config; start_uhttpd;;
   stop)          kill -9 $(pidof uhttpd) &> /dev/null;;
   daemon)        merge_luci_root; mount_config; start_uhttpd; run_rcloal; tail -f /dev/null;;
   restart)       kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
   merge)         merge;;
+  update)        update_internal_plugin;;
   *)             kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
 esac
