@@ -151,6 +151,11 @@ update_internal_plugin(){
   wget ${diskman} -O ${tmp_dir}/diskman.zip
   unzip ${tmp_dir}/diskman.zip "*/applications/luci-app-diskman/*" -o -d ${tmp_dir}
 
+  echo "Updating podsamba.."
+  local podsamba="https://github.com/lisaac/luci-app-podsamba/archive/master.zip"
+  wget ${diskman} -O ${tmp_dir}/podsamba.zip
+  unzip ${tmp_dir}/podsamba.zip "*/applications/luci-app-podsamba/*" -o -d ${tmp_dir}
+
   # echo "Updating podclash.."
   # local podclash="https://github.com/lisaac/luci-app-podclash/archive/main.zip"
   # wget ${podclash} -O ${tmp_dir}/podclash.zip

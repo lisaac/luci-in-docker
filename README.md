@@ -6,7 +6,7 @@
 - `luci-in-docker` 目的是将家用 `NAS` 服务全部部署在 `Docker` 中，并通过 `luci` 进行管理，从而实现 `NAS IN DOCKER`
 
 ## [`lisaac/luci:latest`](https://hub.docker.com/r/lisaac/luci)
-> [`lisaac/luci:latest`](https://hub.docker.com/r/lisaac/luci) 内置 [`luci-app-dockerman`](https://github.com/lisaac/luci-app-dockerman) [`luci-app-diskman`](https://github.com/lisaac/luci-app-diskman) 等常用插件，需要骨架 `luci` 请使用 `lisaac/luci:nano`
+> [`lisaac/luci:latest`](https://hub.docker.com/r/lisaac/luci) 内置 [`luci-app-dockerman`](https://github.com/lisaac/luci-app-dockerman) [`luci-app-diskman`](https://github.com/lisaac/luci-app-diskman) [`luci-app-podsamba`](https://github.com/lisaac/luci-app-podsamba) 等常用插件（陆续增加，以实现简单 NAS 功能），需要骨架 `luci` 请使用 `lisaac/luci:nano`
 
 > tips: 由于 `luci-app-diskman` `luci-app-dockerman` 中的依赖较多，第一次启动安装依赖可能会比较慢，需要多等一会，通过 `docker logs luci` 可以看到运行日志
 ```
