@@ -153,8 +153,13 @@ update_internal_plugin(){
 
   echo "Updating podsamba.."
   local podsamba="https://github.com/lisaac/luci-app-podsamba/archive/master.zip"
-  wget ${diskman} -O ${tmp_dir}/podsamba.zip
+  wget ${podsamba} -O ${tmp_dir}/podsamba.zip
   unzip ${tmp_dir}/podsamba.zip "*/applications/luci-app-podsamba/*" -o -d ${tmp_dir}
+
+  echo "Updating podminidlna.."
+  local podminidlna="https://github.com/lisaac/luci-app-podminidlna/archive/master.zip"
+  wget ${podminidlna} -O ${tmp_dir}/podminidlna.zip
+  unzip ${tmp_dir}/podminidlna.zip "*/applications/luci-app-podminidlna/*" -o -d ${tmp_dir}
 
   # echo "Updating podclash.."
   # local podclash="https://github.com/lisaac/luci-app-podclash/archive/main.zip"
