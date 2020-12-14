@@ -1,17 +1,19 @@
 #!/bin/sh
 
-PLUGIN_DIR='/external/plugin'
-CONFIG_DIR='/external/cfg.d'
-INTERNAL_PLUGIN_DIR='/internal/plugin'
-export LUCI_SYSROOT='/tmp/.luci' #`cd $1; pwd`
-export IPKG_INSTROOT=$LUCI_SYSROOT
-export LD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH"
-export PATH="$LUCI_SYSROOT/bin:$LUCI_SYSROOT/sbin:$LUCI_SYSROOT/usr/sbin:$LUCI_SYSROOT/usr/bin:$PATH"
-export LUA_PATH="$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/init.lua;;"
-export LUA_CPATH="$LUCI_SYSROOT/usr/lib/lua/?.so;;"
-export DYLD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH"
+init_env() {
+  PLUGIN_DIR='/external/plugin'
+  CONFIG_DIR='/external/cfg.d'
+  INTERNAL_PLUGIN_DIR='/internal/plugin'
+  export LUCI_SYSROOT='/tmp/.luci'
+  export IPKG_INSTROOT=$LUCI_SYSROOT
+  export LD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH"
+  export PATH="$LUCI_SYSROOT/bin:$LUCI_SYSROOT/sbin:$LUCI_SYSROOT/usr/sbin:$LUCI_SYSROOT/usr/bin:$PATH"
+  export LUA_PATH="$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/init.lua;;"
+  export LUA_CPATH="$LUCI_SYSROOT/usr/lib/lua/?.so;;"
+  export DYLD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH"
 
-installed_apk=$(apk info | sed ':a;N;s/\n/ /g;ta')
+  installed_apk=$(apk info | sed ':a;N;s/\n/ /g;ta')
+}
 
 merge() {
   echo "Merging plugin $1.."
@@ -173,11 +175,12 @@ update_internal_plugin(){
 }
 
 case $1 in
-  start)         merge_luci_root; mount_config; start_uhttpd;;
-  stop)          kill -9 $(pidof uhttpd) &> /dev/null;;
-  daemon)        merge_luci_root; mount_config; start_uhttpd; run_rcloal; tail -f /dev/null;;
-  restart)       kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
-  merge)         merge;;
-  update)        update_internal_plugin;;
-  *)             kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
+  start)         init_env; merge_luci_root; mount_config; start_uhttpd;;
+  stop)          init_env; kill -9 $(pidof uhttpd) &> /dev/null;;
+  daemon)        init_env; merge_luci_root; mount_config; start_uhttpd; run_rcloal; tail -f /dev/null;;
+  restart)       init_env; kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
+  merge)         init_env; merge;;
+  update)        init_env; update_internal_plugin;;
+  env)           init_env;;
+  *)             init_env; kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
 esac
