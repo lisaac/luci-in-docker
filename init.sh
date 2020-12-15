@@ -175,12 +175,12 @@ update_internal_plugin(){
 }
 
 case $1 in
-  start)         init_env; merge_luci_root; mount_config; start_uhttpd;;
+  start)         init_env; mount_config; merge_luci_root; start_uhttpd;;
   stop)          init_env; kill -9 $(pidof uhttpd) &> /dev/null;;
-  daemon)        init_env; merge_luci_root; mount_config; start_uhttpd; run_rcloal; tail -f /dev/null;;
-  restart)       init_env; kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
+  daemon)        init_env; mount_config; merge_luci_root; start_uhttpd; run_rcloal; tail -f /dev/null;;
+  restart)       init_env; kill -9 $(pidof uhttpd) &> /dev/null; mount_config; merge_luci_root; start_uhttpd;;
   merge)         init_env; merge;;
   update)        init_env; update_internal_plugin;;
   env)           init_env;;
-  *)             init_env; kill -9 $(pidof uhttpd) &> /dev/null; merge_luci_root; mount_config; start_uhttpd;;
+  *)             init_env; kill -9 $(pidof uhttpd) &> /dev/null; mount_config; merge_luci_root; start_uhttpd;;
 esac
