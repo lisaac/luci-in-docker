@@ -90,7 +90,16 @@ function action_passwd()
 end
 
 function action_reboot()
-	luci.sys.exec("/init.sh")
+	local dsp = require "luci.dispatcher"
+	local utl = require "luci.util"
+	local sauth = require "luci.sauth"
+	local sid = dsp.context.authsession
+	
+	if sid then
+		sauth.kill(sid)
+	end
+	utl.copcall(luci.sys.exec, "kill -9 1")
+	-- luci.sys.exec("/init.sh")
 end
 
 function fork_exec(command)
