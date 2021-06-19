@@ -16,6 +16,7 @@ docker run -d \
   --restart unless-stopped \
   --privileged \
   -p 80:80 \
+  -p 7682:7682 \
   -e TZ=Asia/Shanghai \
   -v $HOME/pods/luci:/external:rslave \
   -v /media:/media:rshared \
@@ -35,6 +36,7 @@ docker run -d \
   --restart unless-stopped \
   --privileged \
   -p 80:80 \
+  -p 7682:7682 \
   -e TZ=Asia/Shanghai \
   -v $HOME/pods/luci:/external:rslave \
   -v /media:/media:rshared \

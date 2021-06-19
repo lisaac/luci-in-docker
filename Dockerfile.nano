@@ -1,4 +1,4 @@
-FROM alpine:latest as compile_stage
+FROM alpine:3.12 as compile_stage
 
 ENV DST_LUCI_ROOT='/tmp/dst/luci/root'
 
