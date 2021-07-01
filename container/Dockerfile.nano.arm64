@@ -71,7 +71,7 @@ RUN apk update && \
     cp /tmp/luci/modules/luci-base/src/parser.so $DST_LUCI_ROOT/usr/lib/lua/luci/template && \
     touch /tmp/dst/luci/Makefile
 
-FROM multiarch/alpine:amd64-latest-stable
+FROM multiarch/alpine:arm64-latest-stable
 
 
 LABEL maintainer='lisaac <lisaac.cn@gmail.com>'
