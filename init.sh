@@ -175,6 +175,7 @@ update_internal_plugin(){
 }
 
 case $1 in
+  env)           init_env;
   start)         init_env; mount_config; merge_luci_root; start_uhttpd;;
   stop)          init_env; kill -9 $(pidof uhttpd) &> /dev/null;;
   daemon)        init_env; mount_config; merge_luci_root; start_uhttpd; run_rcloal; tail -f /dev/null;;
