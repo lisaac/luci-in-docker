@@ -19,6 +19,8 @@ merge() {
   echo "Merging plugin $1.."
   src=$1
   dst=$2
+  # 跳过以_开头的目录
+  [[ $(echo $src | awk -F'/' '{print $NF}') = "_*" ]] && return
   mkdir -p $dst
     # 执行 preinst
   [ -f "$src/preinst" ] && echo -e "\tExecuting preinst.."  && chmod +x $src/preinst && $src/preinst
@@ -85,10 +87,14 @@ merge_luci_root() {
   do
     local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
     [ -n "$valid_d" ] && \
-    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';' | head -n 1)
+    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';')
       # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
-    [ -n "$valid_d2" ] && \
-    merge $valid_d2 $LUCI_SYSROOT
+    [ -n "$valid_d2" ] && {
+      for v_d in $valid_d2
+      do
+        merge $v_d $LUCI_SYSROOT
+      done
+    }
   done
 
   echo "MERGING EXTERNAL PLUGIN.."
@@ -96,14 +102,18 @@ merge_luci_root() {
   do
     local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
     [ -n "$valid_d" ] && \
-    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';' | head -n 1)
-    # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
-    [ -n "$valid_d2" ] && \
-    merge $valid_d2 $LUCI_SYSROOT
+    local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';')
+      # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
+    [ -n "$valid_d2" ] && {
+      for v_d in $valid_d2
+      do
+        merge $v_d $LUCI_SYSROOT
+      done
+    }
   done
 
   chmod +x $LUCI_SYSROOT/etc/init.d/*
-  
+
   echo "Mounting rc.common.."
   touch /etc/rc.common
   umount /etc/rc.common 2&> /dev/null
