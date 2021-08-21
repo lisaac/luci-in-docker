@@ -1,9 +1,0 @@
-config httpd
-	option init httpd
-
-config system
-	option init led
-	option exec '/etc/init.d/log reload'
-
-config luci_plugin_samba
-	option exec 'luci_plugin_samba'

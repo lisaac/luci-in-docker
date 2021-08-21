@@ -106,8 +106,8 @@ return view.extend({
 		s.addremove = false;
 
 		s.tab('general', _('General Settings'));
-		// s.tab('logging', _('Logging'));
-		// s.tab('timesync', _('Time Synchronization'));
+		s.tab('logging', _('Logging'));
+		s.tab('timesync', _('Time Synchronization'));
 		s.tab('language', _('Language and Style'));
 
 		/*
@@ -143,7 +143,7 @@ return view.extend({
 
 		/*
 		 * Logging
-		 
+		 */
 
 		o = s.taboption('logging', form.Value, 'log_size', _('System log buffer size'), "kiB")
 		o.optional    = true
@@ -183,7 +183,7 @@ return view.extend({
 		o.value(5, _('Debug'))
 		o.value(8, _('Normal'))
 		o.value(9, _('Warning'))
-		*/
+
 		/*
 		 * Zram Properties
 		 */
@@ -231,7 +231,7 @@ return view.extend({
 
 		/*
 		 * NTP
-		 
+		 */
 
 		if (L.hasSystemFeature('sysntpd')) {
 			var default_servers = [
@@ -281,7 +281,7 @@ return view.extend({
 				return uci.get('system', 'ntp', 'server');
 			};
 		}
-		*/
+
 		return m.render().then(function(mapEl) {
 			poll.add(function() {
 				return callGetLocaltime().then(function(t) {

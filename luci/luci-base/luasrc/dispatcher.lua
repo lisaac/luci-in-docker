@@ -138,7 +138,12 @@ end
 local function check_acl_depends(require_groups, groups)
 	if type(require_groups) == "table" and #require_groups > 0 then
 		local writable = false
-
+		if groups == "*" then
+			return true
+		-- TODO
+		else
+			return true
+		end
 		for _, group in ipairs(require_groups) do
 			local read = false
 			local write = false
@@ -530,49 +535,82 @@ function test_post_security()
 end
 
 local function session_retrieve(sid, allowed_users)
-	local sdat = util.ubus("session", "get", { ubus_rpc_session = sid })
-	local sacl = util.ubus("session", "access", { ubus_rpc_session = sid })
+	local sauth = require "luci.sauth"
+	local sdat = sauth.read(sid)
 
 	if type(sdat) == "table" and
-	   type(sdat.values) == "table" and
-	   type(sdat.values.token) == "string" and
-	   (not allowed_users or
-	    util.contains(allowed_users, sdat.values.username))
+		 type(sdat.data.token) == "string" 
+		 and (not allowed_users or util.contains(allowed_users, sdat.data.username))
 	then
-		uci:set_session_id(sid)
-		return sid, sdat.values, type(sacl) == "table" and sacl or {}
+		return sid, sdat, {["access-group"] = "*"}
 	end
-
 	return nil, nil, nil
 end
 
 local function session_setup(user, pass)
-	local login = util.ubus("session", "login", {
-		username = user,
-		password = pass,
-		timeout  = tonumber(luci.config.sauth.sessiontime)
-	})
-
-	local rp = context.requestpath
-		and table.concat(context.requestpath, "/") or ""
-
-	if type(login) == "table" and
-	   type(login.ubus_rpc_session) == "string"
-	then
-		util.ubus("session", "set", {
-			ubus_rpc_session = login.ubus_rpc_session,
-			values = { token = sys.uniqueid(16) }
-		})
-
-		io.stderr:write("luci: accepted login on /%s for %s from %s\n"
-			%{ rp, user or "?", http.getenv("REMOTE_ADDR") or "?" })
-
-		return session_retrieve(login.ubus_rpc_session)
-	end
-
-	io.stderr:write("luci: failed login on /%s for %s from %s\n"
-		%{ rp, user or "?", http.getenv("REMOTE_ADDR") or "?" })
+	local sauth = require "luci.sauth"
+	return session_retrieve(sauth.setup(user,pass))
+	-- if luci.sys.user.checkpasswd(user, pass) then
+	-- 	local sid = luci.sys.uniqueid(16)
+	-- 	local token = luci.sys.uniqueid(16)
+	-- 	sauth.reap()
+	-- 	sauth.write(sid, {
+	-- 		acls = {},
+	-- 		data = {
+	-- 			username = user,
+	-- 			token = token
+	-- 		},
+	-- 		session=luci.sys.uniqueid(16)
+	-- 	})
+	-- 	return session_retrieve(sid)
+	-- end
+	-- return nil, nil, nil
 end
+
+-- local function session_retrieve(sid, allowed_users)
+-- 	local sdat = util.ubus("session", "get", { ubus_rpc_session = sid })
+-- 	local sacl = util.ubus("session", "access", { ubus_rpc_session = sid })
+
+-- 	if type(sdat) == "table" and
+-- 	   type(sdat.values) == "table" and
+-- 	   type(sdat.values.token) == "string" and
+-- 	   (not allowed_users or
+-- 	    util.contains(allowed_users, sdat.values.username))
+-- 	then
+-- 		uci:set_session_id(sid)
+-- 		return sid, sdat.values, type(sacl) == "table" and sacl or {}
+-- 	end
+
+-- 	return nil, nil, nil
+-- end
+
+-- local function session_setup(user, pass)
+-- 	local login = util.ubus("session", "login", {
+-- 		username = user,
+-- 		password = pass,
+-- 		timeout  = tonumber(luci.config.sauth.sessiontime)
+-- 	})
+
+-- 	local rp = context.requestpath
+-- 		and table.concat(context.requestpath, "/") or ""
+
+-- 	if type(login) == "table" and
+-- 	   type(login.ubus_rpc_session) == "string"
+-- 	then
+-- 		util.ubus("session", "set", {
+-- 			ubus_rpc_session = login.ubus_rpc_session,
+-- 			values = { token = sys.uniqueid(16) }
+-- 		})
+
+-- 		io.stderr:write("luci: accepted login on /%s for %s from %s\n"
+-- 			%{ rp, user or "?", http.getenv("REMOTE_ADDR") or "?" })
+
+-- 		return session_retrieve(login.ubus_rpc_session)
+-- 	end
+
+-- 	io.stderr:write("luci: failed login on /%s for %s from %s\n"
+-- 		%{ rp, user or "?", http.getenv("REMOTE_ADDR") or "?" })
+-- end
 
 local function check_authentication(method)
 	local auth_type, auth_param = method:match("^(%w+):(.+)$")
@@ -908,8 +946,8 @@ function dispatch(request)
 		end
 
 		ctx.authsession = sid
-		ctx.authtoken = sdat.token
-		ctx.authuser = sdat.username
+		ctx.authtoken = sdat.data.token
+		ctx.authuser = sdat.data.username
 		ctx.authacl = sacl
 	end
 
@@ -1141,7 +1179,7 @@ function createtree_json()
 	local files = {}
 	local cachefile
 
-	for file in (fs.glob("/usr/share/luci/menu.d/*.json") or function() end) do
+	for file in (fs.glob("/tmp/.luci/usr/share/luci/menu.d/*.json") or function() end) do
 		files[#files+1] = file
 	end
 
@@ -1355,13 +1393,14 @@ function _cbi(self, ...)
 	local state = nil
 
 	local function has_uci_access(config, level)
-		local rv = util.ubus("session", "access", {
-			ubus_rpc_session = context.authsession,
-			scope = "uci", object = config,
-			["function"] = level
-		})
+		-- local rv = util.ubus("session", "access", {
+		-- 	ubus_rpc_session = context.authsession,
+		-- 	scope = "uci", object = config,
+		-- 	["function"] = level
+		-- })
 
-		return (type(rv) == "table" and rv.access == true) or false
+		-- return (type(rv) == "table" and rv.access == true) or false
+		return true
 	end
 
 	local i, res

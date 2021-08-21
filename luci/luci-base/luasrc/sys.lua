@@ -29,6 +29,51 @@ exec = luci.util.exec
 -- exists.
 getenv = nixio.getenv
 
+function mounts()
+	local data = {}
+	local k = {"fs", "blocks", "used", "available", "percent", "mountpoint"}
+	local ps = luci.util.execi("df")
+
+	if not ps then
+		return
+	else
+		ps()
+	end
+
+	for line in ps do
+		local row = {}
+
+		local j = 1
+		for value in line:gmatch("[^%s]+") do
+			row[k[j]] = value
+			j = j + 1
+		end
+
+		if row[k[1]] then
+
+			-- this is a rather ugly workaround to cope with wrapped lines in
+			-- the df output:
+			--
+			--	/dev/scsi/host0/bus0/target0/lun0/part3
+			--                   114382024  93566472  15005244  86% /mnt/usb
+			--
+
+			if not row[k[2]] then
+				j = 2
+				line = ps()
+				for value in line:gmatch("[^%s]+") do
+					row[k[j]] = value
+					j = j + 1
+				end
+			end
+
+			table.insert(data, row)
+		end
+	end
+
+	return data
+end
+
 function hostname(newname)
 	if type(newname) == "string" and #newname > 0 then
 		fs.writefile( "/proc/sys/kernel/hostname", newname )
@@ -378,12 +423,11 @@ function process.list()
 	end
 
 	for line in ps do
-		local pid, ppid, user, stat, vsz, mem, cpu, cmd = line:match(
-			"^ *(%d+) +(%d+) +(%S.-%S) +([RSDZTW][<NW ][<N ]) +(%d+m?) +(%d+%%) +(%d+%%) +(.+)"
+		local pid, ppid, user, stat, vsz, mem, cpu1, cpu, cmd = line:match(
+			"^ *(%d+) +(%d+) +(%S.-%S) +([RSDZTW][W ][<N ]) +(%d+) +(%d+%%) +(%d+) +(%d+%%) +(.+)"
 		)
-
 		local idx = tonumber(pid)
-		if idx and not cmd:match("top %-bn1") then
+		if idx then
 			data[idx] = {
 				['PID']     = pid,
 				['PPID']    = ppid,
@@ -391,6 +435,7 @@ function process.list()
 				['STAT']    = stat,
 				['VSZ']     = vsz,
 				['%MEM']    = mem,
+				['CPU']		= cpu1,
 				['%CPU']    = cpu,
 				['COMMAND'] = cmd
 			}

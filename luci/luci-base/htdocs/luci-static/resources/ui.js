@@ -4014,11 +4014,16 @@ var UI = baseclass.extend(/** @lends LuCI.ui.prototype */ {
 		 */
 		renderChangeIndicator: function(changes) {
 			var n_changes = 0;
-
-			for (var config in changes)
+			for (var config in changes){
 				if (changes.hasOwnProperty(config))
-					n_changes += changes[config].length;
-
+					for (var x in changes[config]){
+						if (changes[config].hasOwnProperty(x))
+							for (var y in changes[config][x]){
+								if (changes[config][x].hasOwnProperty(y))
+									n_changes += 1;
+							}
+						}
+			}
 			this.changes = changes;
 			this.setIndicator(n_changes);
 		},
@@ -4081,33 +4086,66 @@ var UI = baseclass.extend(/** @lends LuCI.ui.prototype */ {
 					continue;
 
 				list.appendChild(E('h5', '# /etc/config/%s'.format(config)));
-
-				for (var i = 0, added = null; i < this.changes[config].length; i++) {
-					var chg = this.changes[config][i],
-					    tpl = this.changeTemplates['%s-%d'.format(chg[0], chg.length)];
-
-					list.appendChild(E(tpl.replace(/%([01234])/g, function(m0, m1) {
-						switch (+m1) {
-						case 0:
-							return config;
-
-						case 2:
-							if (added != null && chg[1] == added[0])
-								return '@' + added[1] + '[-1]';
-							else
-								return chg[1];
-
-						case 4:
-							return "'%h'".format(chg[3].replace(/'/g, "'\"'\"'"));
-
-						default:
-							return chg[m1-1];
+				let tpl
+				for (var section in this.changes[config]){
+					let isAdd = false
+					if (this.changes[config][section][".type"] == ""){
+						// section 被删除
+						tpl = '<del>uci del %s.<strong>%s</strong></del>'.format(config, section)
+						list.appendChild(E(tpl))
+						continue;
+					} else if (this.changes[config][section][".type"] && this.changes[config][section][".type"] != "") {
+						console.log(this.changes[config][section][".type"])
+						if (/^\d+$/.test(this.changes[config][section][".type"])){
+							// 如果.type 是数字，为reorder
+							tpl = '<var><ins>uci reorder %s.%s=<strong>%s</strong></ins></var>'.format(config, section, this.changes[config][section][".type"]);
+							list.appendChild(E(tpl))
+						} else {
+							// 新增 section
+							isAdd = true
+							tpl = '<ins>uci add %s <strong>%s</strong> # =%s</ins>'.format(config, this.changes[config][section][".type"], section);
+							list.appendChild(E(tpl))
 						}
-					})));
-
-					if (chg[0] == 'add')
-						added = [ chg[1], chg[2] ];
+					}
+					for (var option in this.changes[config][section]){
+						if (option == ".type") continue;
+							if (isAdd){
+								tpl = '<ins>uci set %s.%s.%s=<strong>%s</strong></ins>'.format(config, section, option, this.changes[config][section][option]);
+							}	else if (this.changes[config][section][option] == "" ) {
+								tpl = '<var><del>uci del %s.%s.<strong>%s</strong></del></var>'.format(config, section, option)
+							} else {
+								tpl = '<var><ins>uci set %s.%s.%s=<strong>%s</strong></ins></var>'.format(config, section, option, this.changes[config][section][option]);
+							}
+						list.appendChild(E(tpl))
+					}
 				}
+				// for (var i = 0, added = null; i < this.changes[config].length; i++) {
+				// 	var chg = this.changes[config][i],
+				// 	    tpl = this.changeTemplates['%s-%d'.format(chg[0], chg.length)];
+
+
+				// 	list.appendChild(E(tpl.replace(/%([01234])/g, function(m0, m1) {
+				// 		switch (+m1) {
+				// 		case 0:
+				// 			return config;
+
+				// 		case 2:
+				// 			if (added != null && chg[1] == added[0])
+				// 				return '@' + added[1] + '[-1]';
+				// 			else
+				// 				return chg[1];
+
+				// 		case 4:
+				// 			return "'%h'".format(chg[3].replace(/'/g, "'\"'\"'"));
+
+				// 		default:
+				// 			return chg[m1-1];
+				// 		}
+				// 	})));
+
+				// 	if (chg[0] == 'add')
+				// 		added = [ chg[1], chg[2] ];
+				// }
 			}
 
 			list.appendChild(E('br'));

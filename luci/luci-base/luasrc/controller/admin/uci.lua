@@ -31,7 +31,10 @@ end
 
 function action_apply_rollback()
 	local uci = require "luci.model.uci"
-	local token, errstr = uci:apply(true)
+	local http = require "luci.http"
+	local sid = http.getcookie("sysauth")
+	luci.util.perror(sid)
+	local token, errstr = uci:apply(true, sid)
 	if token then
 		luci.http.prepare_content("application/json")
 		luci.http.write_json({ token = token })

@@ -11,7 +11,9 @@
 	local http = require "luci.http"
 	local disp = require "luci.dispatcher"
 
-	local boardinfo = util.ubus("system", "board")
+	local boardinfo = {
+		hostname = sys.hostname()
+	}
 
 	local node = disp.context.dispatched
 

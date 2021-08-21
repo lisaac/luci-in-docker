@@ -1,12 +1,12 @@
 FROM alpine:3.12 as compile_stage
 
-ENV DST_LUCI_ROOT='/tmp/dst/luci/root'
+ENV LUCI_BIN_ROOT='/tmp/internal/luci-bin/root' LUCI_BIN='/tmp/internal/luci-bin' INTERNAL_PLUGIN_DIR='/tmp/internal'
 
-COPY root $DST_LUCI_ROOT
-COPY po /tmp/dst/luci/po
+COPY luci $INTERNAL_PLUGIN_DIR/
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
 #sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
 RUN apk update && \
+    sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
     cd /tmp && git clone --depth=1 https://git.openwrt.org/project/libubox.git && \
@@ -53,23 +53,24 @@ RUN apk update && \
     sed -i 's/^CFLAGS *+=/CFLAGS       += -fPIC /g' Makefile && make && \
     # parser.so & po2lmo
     cd /tmp/luci/modules/luci-base/src && sed -i '1i\CFLAGS += -fPIC' Makefile && \
-    make parser.so && make po2lmo && \
-    # make jsmin && \
+    make parser.so && \
+    make po2lmo && \
+    make jsmin && \
     # copy to dst
-    mkdir -p $DST_LUCI_ROOT/usr/lib $DST_LUCI_ROOT/usr/lib/lua $DST_LUCI_ROOT/usr/sbin $DST_LUCI_ROOT/usr/bin $DST_LUCI_ROOT/usr/local/share/libubox/ $DST_LUCI_ROOT/usr/lib/lua/luci/template $DST_LUCI_ROOT/www && \
-    cp /tmp/libubox/*.so $DST_LUCI_ROOT/usr/lib/ && cp /tmp/libubox/lua/*.so $DST_LUCI_ROOT/usr/lib/lua/ && cp /tmp/libubox/jshn $DST_LUCI_ROOT/usr/bin && cp /tmp/libubox/sh/jshn.sh $DST_LUCI_ROOT/usr/local/share/libubox/ && \
-    cp /tmp/ustream-ssl/*.so $DST_LUCI_ROOT/usr/lib/ && \
-    cp /tmp/uci/*.so $DST_LUCI_ROOT/usr/lib/ && cp /tmp/uci/lua/*.so $DST_LUCI_ROOT/usr/lib/lua/ && cp /tmp/uci/uci $DST_LUCI_ROOT/usr/sbin/ && \
-    cp /tmp/uhttpd/*.so $DST_LUCI_ROOT/usr/lib/ && cp /tmp/uhttpd/uhttpd $DST_LUCI_ROOT/usr/sbin/ && \
-    cp /tmp/libnl-tiny/*.so $DST_LUCI_ROOT/usr/lib/ && \
-    cp /tmp/luci/libs/luci-lib-ip/src/*.so $DST_LUCI_ROOT/usr/lib/lua/luci/ && \
-    cp /tmp/luci/libs/luci-lib-jsonc/src/*.so $DST_LUCI_ROOT/usr/lib/lua/luci/ && \
-    cp /tmp/luci/libs/luci-lib-nixio/src/*.so  $DST_LUCI_ROOT/usr/lib/lua/ && \
-    cp /tmp/lucihttp/lucihttp.so $DST_LUCI_ROOT/usr/lib/lua && cp /tmp/lucihttp/liblucihttp.so* $DST_LUCI_ROOT/usr/lib && \
-    cp /tmp/luci/modules/luci-base/src/po2lmo $DST_LUCI_ROOT/usr/sbin/ && \
-    # cp /tmp/luci/modules/luci-base/src/jsmin $DST_LUCI_ROOT/usr/sbin/ && \
-    cp /tmp/luci/modules/luci-base/src/parser.so $DST_LUCI_ROOT/usr/lib/lua/luci/template && \
-    touch /tmp/dst/luci/Makefile
+    mkdir -p $LUCI_BIN_ROOT/usr/lib $LUCI_BIN_ROOT/usr/lib/lua $LUCI_BIN_ROOT/usr/sbin $LUCI_BIN_ROOT/usr/bin $LUCI_BIN_ROOT/usr/local/share/libubox/ $LUCI_BIN_ROOT/usr/lib/lua/luci/template $LUCI_BIN_ROOT/www && \
+    touch $LUCI_BIN/Makefile && \
+    cp /tmp/libubox/*.so $LUCI_BIN_ROOT/usr/lib/ && cp /tmp/libubox/lua/*.so $LUCI_BIN_ROOT/usr/lib/lua/ && cp /tmp/libubox/jshn $LUCI_BIN_ROOT/usr/bin && cp /tmp/libubox/sh/jshn.sh $LUCI_BIN_ROOT/usr/local/share/libubox/ && \
+    cp /tmp/ustream-ssl/*.so $LUCI_BIN_ROOT/usr/lib/ && \
+    cp /tmp/uci/*.so $LUCI_BIN_ROOT/usr/lib/ && cp /tmp/uci/lua/*.so $LUCI_BIN_ROOT/usr/lib/lua/ && cp /tmp/uci/uci $LUCI_BIN_ROOT/usr/sbin/ && \
+    cp /tmp/uhttpd/*.so $LUCI_BIN_ROOT/usr/lib/ && cp /tmp/uhttpd/uhttpd $LUCI_BIN_ROOT/usr/sbin/ && \
+    cp /tmp/libnl-tiny/*.so $LUCI_BIN_ROOT/usr/lib/ && \
+    cp /tmp/luci/libs/luci-lib-ip/src/*.so $LUCI_BIN_ROOT/usr/lib/lua/luci/ && \
+    cp /tmp/luci/libs/luci-lib-jsonc/src/*.so $LUCI_BIN_ROOT/usr/lib/lua/luci/ && \
+    cp /tmp/luci/libs/luci-lib-nixio/src/*.so  $LUCI_BIN_ROOT/usr/lib/lua/ && \
+    cp /tmp/lucihttp/lucihttp.so $LUCI_BIN_ROOT/usr/lib/lua && cp /tmp/lucihttp/liblucihttp.so* $LUCI_BIN_ROOT/usr/lib && \
+    cp /tmp/luci/modules/luci-base/src/po2lmo $LUCI_BIN_ROOT/usr/sbin/ && \
+    cp /tmp/luci/modules/luci-base/src/jsmin $LUCI_BIN_ROOT/usr/sbin/ && \
+    cp /tmp/luci/modules/luci-base/src/parser.so $LUCI_BIN_ROOT/usr/lib/lua/luci/template
 
 FROM alpine:latest
 
@@ -79,7 +80,7 @@ ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_P
 ENV IPKG_INSTROOT=$LUCI_SYSROOT LD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH PATH=$LUCI_SYSROOT/bin:$LUCI_SYSROOT/sbin:$LUCI_SYSROOT/usr/sbin:$LUCI_SYSROOT/usr/bin:$PATH LUA_PATH=$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/init.lua;; LUA_CPATH=$LUCI_SYSROOT/usr/lib/lua/?.so;; DYLD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH
 
 COPY init.sh /
-COPY --from=compile_stage /tmp/dst $INTERNAL_PLUGIN_DIR/
+COPY --from=compile_stage /tmp/internal $INTERNAL_PLUGIN_DIR/luci/
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk --no-cache update && \

@@ -1,0 +1,15 @@
+{
+	"luci-fake-ubus": {
+		"description": "Grant access to system configuration",
+		"read": {
+			"ubus": {
+				"session": [ "access", "login" ]
+			}
+		},
+		"write": {
+			"ubus": {
+				"session": [ "access", "login" ]
+			}
+		}
+	}
+}

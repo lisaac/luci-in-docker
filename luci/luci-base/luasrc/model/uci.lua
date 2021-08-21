@@ -4,7 +4,7 @@
 local os    = require "os"
 local util  = require "luci.util"
 local table = require "table"
-
+local xuci   = require "uci"
 
 local setmetatable, rawget, rawset = setmetatable, rawget, rawset
 local require, getmetatable, assert = require, getmetatable, assert
@@ -32,15 +32,26 @@ local ERRSTR = {
 	"Connection failed"
 }
 
+local bak_configs = "/tmp/luci-config-bak"
+local bak_changes = "/tmp/luci-uci-bak"
+local rollback_confirm = "/tmp/luci-uci-confirm"
+
 local session_id = nil
 
-local function call(cmd, args)
-	if type(args) == "table" and session_id then
-		args.ubus_rpc_session = session_id
+local function call(cmd, arg1, arg2, arg3, arg4)
+	local xcursor = xuci.cursor()
+	if not arg1 then
+		return xcursor[cmd]()
+	elseif not arg2 then
+		return xcursor[cmd](arg1)
+	elseif not arg3 then
+		return xcursor[cmd](arg1, arg2)
+	elseif not arg4 then
+		return xcursor[cmd](arg1, arg2, arg3)
+	else
+		return xcursor[cmd](arg1, arg2, arg3, arg4)
 	end
-	return util.ubus("uci", cmd, args)
 end
-
 
 function cursor()
 	return _M
@@ -54,25 +65,16 @@ function substate(self)
 	return self
 end
 
-
 function get_confdir(self)
-	return "/etc/config"
+	return call("get_confdir")
 end
 
 function get_savedir(self)
-	return "/tmp/.uci"
+	return call("get_savedir")
 end
 
 function get_session_id(self)
 	return session_id
-end
-
-function set_confdir(self, directory)
-	return false
-end
-
-function set_savedir(self, directory)
-	return false
 end
 
 function set_session_id(self, id)
@@ -80,224 +82,55 @@ function set_session_id(self, id)
 	return true
 end
 
+function set_confdir(self, directory)
+	return call("set_confdir", directory)
+end
+
+function set_savedir(self, directory)
+	return call("set_savedir", directory)
+end
 
 function load(self, config)
-	return true
+	return call("load", config)
 end
 
 function save(self, config)
-	return true
+	return call("save", config)
 end
 
 function unload(self, config)
-	return true
+	return call("unload", config)
 end
-
 
 function changes(self, config)
-	local rv, err = call("changes", { config = config })
-
-	if type(rv) == "table" and type(rv.changes) == "table" then
-		return rv.changes
-	elseif err then
-		return nil, ERRSTR[err]
-	else
-		return { }
-	end
+	return call("changes", config)
 end
 
-
 function revert(self, config)
-	local _, err = call("revert", { config = config })
-	return (err == nil), ERRSTR[err]
+	return call("revert", config)
 end
 
 function commit(self, config)
-	local _, err = call("commit", { config = config })
-	return (err == nil), ERRSTR[err]
+	return call("commit", config)
 end
 
-function apply(self, rollback)
-	local _, err
-
-	if rollback then
-		local sys = require "luci.sys"
-		local conf = require "luci.config"
-		local timeout = tonumber(conf and conf.apply and conf.apply.rollback or 90) or 0
-
-		_, err = call("apply", {
-			timeout = (timeout > 90) and timeout or 90,
-			rollback = true
-		})
-
-		if not err then
-			local now = os.time()
-			local token = sys.uniqueid(16)
-
-			util.ubus("session", "set", {
-				ubus_rpc_session = "00000000000000000000000000000000",
-				values = {
-					rollback = {
-						token   = token,
-						session = session_id,
-						timeout = now + timeout
-					}
-				}
-			})
-
-			return token
-		end
-	else
-		_, err = call("changes", {})
-
-		if not err then
-			if type(_) == "table" and type(_.changes) == "table" then
-				local k, v
-				for k, v in pairs(_.changes) do
-					_, err = call("commit", { config = k })
-					if err then
-						break
-					end
-				end
-			end
-		end
-
-		if not err then
-			_, err = call("apply", { rollback = false })
-		end
-	end
-
-	return (err == nil), ERRSTR[err]
+function get_all(self, config, section)
+	return call("get_all", config, section)
 end
 
-function confirm(self, token)
-	local is_pending, time_remaining, rollback_sid, rollback_token = self:rollback_pending()
-
-	if is_pending then
-		if token ~= rollback_token then
-			return false, "Permission denied"
-		end
-
-		local _, err = util.ubus("uci", "confirm", {
-			ubus_rpc_session = rollback_sid
-		})
-
-		if not err then
-			util.ubus("session", "set", {
-				ubus_rpc_session = "00000000000000000000000000000000",
-				values = { rollback = {} }
-			})
-		end
-
-		return (err == nil), ERRSTR[err]
-	end
-
-	return false, "No data"
+function add(self, config, stype)
+	return call("add", config, stype)
 end
 
-function rollback(self)
-	local is_pending, time_remaining, rollback_sid = self:rollback_pending()
-
-	if is_pending then
-		local _, err = util.ubus("uci", "rollback", {
-			ubus_rpc_session = rollback_sid
-		})
-
-		if not err then
-			util.ubus("session", "set", {
-				ubus_rpc_session = "00000000000000000000000000000000",
-				values = { rollback = {} }
-			})
-		end
-
-		return (err == nil), ERRSTR[err]
-	end
-
-	return false, "No data"
-end
-
-function rollback_pending(self)
-	local rv, err = util.ubus("session", "get", {
-		ubus_rpc_session = "00000000000000000000000000000000",
-		keys = { "rollback" }
-	})
-
-	local now = os.time()
-
-	if type(rv) == "table" and
-	   type(rv.values) == "table" and
-	   type(rv.values.rollback) == "table" and
-	   type(rv.values.rollback.token) == "string" and
-	   type(rv.values.rollback.session) == "string" and
-	   type(rv.values.rollback.timeout) == "number" and
-	   rv.values.rollback.timeout > now
-	then
-		return true,
-			rv.values.rollback.timeout - now,
-			rv.values.rollback.session,
-			rv.values.rollback.token
-	end
-
-	return false, ERRSTR[err]
-end
-
-
-function foreach(self, config, stype, callback)
-	if type(callback) == "function" then
-		local rv, err = call("get", {
-			config = config,
-			type   = stype
-		})
-
-		if type(rv) == "table" and type(rv.values) == "table" then
-			local sections = { }
-			local res = false
-			local index = 1
-
-			local _, section
-			for _, section in pairs(rv.values) do
-				section[".index"] = section[".index"] or index
-				sections[index] = section
-				index = index + 1
-			end
-
-			table.sort(sections, function(a, b)
-				return a[".index"] < b[".index"]
-			end)
-
-			for _, section in ipairs(sections) do
-				local continue = callback(section)
-				res = true
-				if continue == false then
-					break
-				end
-			end
-			return res
-		else
-			return false, ERRSTR[err] or "No data"
-		end
-	else
-		return false, "Invalid argument"
-	end
+function delete(self, config, section, option)
+	return call("delete",  config, section, option)
 end
 
 local function _get(self, operation, config, section, option)
 	if section == nil then
 		return nil
 	elseif type(option) == "string" and option:byte(1) ~= 46 then
-		local rv, err = call(operation, {
-			config  = config,
-			section = section,
-			option  = option
-		})
-
-		if type(rv) == "table" then
-			return rv.value or nil
-		elseif err then
-			return false, ERRSTR[err]
-		else
-			return nil
-		end
+		return call(operation, config, section, option)
 	elseif option == nil then
 		local values = self:get_all(config, section)
 		if values then
@@ -318,37 +151,26 @@ function get_state(self, ...)
 	return _get(self, "state", ...)
 end
 
-function get_all(self, config, section)
-	local rv, err = call("get", {
-		config  = config,
-		section = section
-	})
-
-	if type(rv) == "table" and type(rv.values) == "table" then
-		return rv.values
-	elseif err then
-		return false, ERRSTR[err]
-	else
-		return nil
-	end
-end
-
 function get_bool(self, ...)
 	local val = self:get(...)
 	return (val == "1" or val == "true" or val == "yes" or val == "on")
 end
 
+function foreach(self, config, stype, callback)
+	return call("foreach",  config, stype, callback)
+end
+
 function get_first(self, config, stype, option, default)
 	local rv = default
 
-	self:foreach(config, stype, function(s)
+	local _, err = self:foreach(config, stype, function(s)
 		local val = not option and s[".name"] or s[option]
 
 		if type(default) == "number" then
 			val = tonumber(val)
 		elseif type(default) == "boolean" then
 			val = (val == "1" or val == "true" or
-			       val == "yes" or val == "on")
+						val == "yes" or val == "on")
 		end
 
 		if val ~= nil then
@@ -357,51 +179,39 @@ function get_first(self, config, stype, option, default)
 		end
 	end)
 
-	return rv
+	return rv, err
 end
 
 function get_list(self, config, section, option)
 	if config and section and option then
-		local val = self:get(config, section, option)
-		return (type(val) == "table" and val or { val })
+		local val, err = self:get(config, section, option)
+		return (type(val) == "table" and val or { val }), err
 	end
 	return { }
 end
 
-
 function section(self, config, stype, name, values)
-	local rv, err = call("add", {
-		config = config,
-		type   = stype,
-		name   = name,
-		values = values
-	})
-
-	if type(rv) == "table" then
-		return rv.section
-	elseif err then
-		return false, ERRSTR[err]
+	local stat = true
+	if name then
+		stat = call("set", config, name, stype)
 	else
-		return nil
+		name = self:add(config, stype)
+		stat = name and true
 	end
+
+	if stat and values then
+		stat = self:tset(config, name, values)
+	end
+
+	return stat and name
 end
 
-
-function add(self, config, stype)
-	return self:section(config, stype)
-end
-
-function set(self, config, section, option, ...)
-	if select('#', ...) == 0 then
+function set(self, config, section, option, values)
+	if not values then
 		local sname, err = self:section(config, option, section)
 		return (not not sname), err
 	else
-		local _, err = call("set", {
-			config  = config,
-			section = section,
-			values  = { [option] = select(1, ...) }
-		})
-		return (err == nil), ERRSTR[err]
+		return call("set", config, section, option, values )
 	end
 end
 
@@ -417,92 +227,266 @@ function set_list(self, config, section, option, value)
 	end
 end
 
-function tset(self, config, section, values)
-	local _, err = call("set", {
-		config  = config,
-		section = section,
-		values  = values
-	})
-	return (err == nil), ERRSTR[err]
+function tset(self, config, section, v)
+	local stat = true
+	for k, v in pairs(v) do
+		if k:sub(1, 1) ~= "." then
+			stat = stat and call("set", config, section, k, v)
+		end
+	end
+	return stat
 end
 
 function reorder(self, config, section, index)
-	local sections
-
+	local stat = true
 	if type(section) == "string" and type(index) == "number" then
-		local pos = 0
-
-		sections = { }
-
-		self:foreach(config, nil, function(s)
-			if pos == index then
-				pos = pos + 1
-			end
-
-			if s[".name"] ~= section then
-				pos = pos + 1
-				sections[pos] = s[".name"]
-			else
-				sections[index + 1] = section
-			end
-		end)
+		return call("reorder", config, section, index)
 	elseif type(section) == "table" then
-		sections = section
+		local sid, idx
+		for idx , sid in pairs(section) do
+			stat = stat and call("reorder", config, sid, idx)
+		end
 	else
 		return false, "Invalid argument"
 	end
-
-	local _, err = call("order", {
-		config   = config,
-		sections = sections
-	})
-
-	return (err == nil), ERRSTR[err]
-end
-
-
-function delete(self, config, section, option)
-	local _, err = call("delete", {
-		config  = config,
-		section = section,
-		option  = option
-	})
-	return (err == nil), ERRSTR[err]
+	return stat
 end
 
 function delete_all(self, config, stype, comparator)
-	local _, err
-	if type(comparator) == "table" then
-		_, err = call("delete", {
-			config = config,
-			type   = stype,
-			match  = comparator
-		})
-	elseif type(comparator) == "function" then
-		local rv = call("get", {
-			config = config,
-			type   = stype
-		})
+	local del = {}
 
-		if type(rv) == "table" and type(rv.values) == "table" then
-			local sname, section
-			for sname, section in pairs(rv.values) do
-				if comparator(section) then
-					_, err = call("delete", {
-						config  = config,
-						section = sname
-					})
+	if type(comparator) == "table" then
+		local tbl = comparator
+		comparator = function(section)
+			for k, v in pairs(tbl) do
+				if section[k] ~= v then
+					return false
 				end
 			end
+			return true
 		end
-	elseif comparator == nil then
-		_, err = call("delete", {
-			config  = config,
-			type    = stype
-		})
-	else
-		return false, "Invalid argument"
 	end
 
-	return (err == nil), ERRSTR[err]
+	local function helper (section)
+
+		if not comparator or comparator(section) then
+			del[#del+1] = section[".name"]
+		end
+	end
+
+	self:foreach(config, stype, helper)
+
+	for i, j in ipairs(del) do
+		self:delete(config, j)
+	end
+end
+
+-- Return a list of initscripts affected by configuration changes.
+local function _affected(configlist)
+	configlist = type(configlist) == "table" and configlist or {configlist}
+
+	local c = xuci.cursor()
+	c:load("ucitrack")
+
+	-- Resolve dependencies
+	local reloadlist = {}
+
+	local function _resolve_deps(name)
+		local reload = {name}
+		local deps = {}
+
+		c:foreach("ucitrack", name,
+			function(section)
+				if section.affects then
+					for i, aff in ipairs(section.affects) do
+						deps[#deps+1] = aff
+					end
+				end
+			end)
+
+		for i, dep in ipairs(deps) do
+			for j, add in ipairs(_resolve_deps(dep)) do
+				reload[#reload+1] = add
+			end
+		end
+
+		return reload
+	end
+
+	-- Collect initscripts
+	for j, config in ipairs(configlist) do
+		for i, e in ipairs(_resolve_deps(config)) do
+			if not util.contains(reloadlist, e) then
+				reloadlist[#reloadlist+1] = e
+			end
+		end
+	end
+
+	return reloadlist
+end
+
+-- Applies UCI configuration changes
+-- @param configlist		List of UCI configurations
+-- @param command			Don't apply only return the command
+function _apply(configlist, command)
+	local SYSROOT = os.getenv("LUCI_SYSROOT")
+	configlist = _affected(configlist)
+	if command then
+		return { SYSROOT .. "/sbin/luci-reload", unpack(configlist) }
+	else
+		os.execute( SYSROOT .. "/sbin/luci-reload %s >/dev/null 2>&1"
+			% table.concat(configlist, " "))
+			return 0
+	end
+end
+
+
+local function fork_exec(command)
+	local nixio = require "nixio"
+	local pid = nixio.fork()
+	if pid > 0 then
+		return
+	elseif pid == 0 then
+		-- change to root dir
+		nixio.chdir("/")
+
+		-- patch stdin, out, err to /dev/null
+		local null = nixio.open("/dev/null", "w+")
+		if null then
+			nixio.dup(null, nixio.stderr)
+			nixio.dup(null, nixio.stdout)
+			nixio.dup(null, nixio.stdin)
+			if null:fileno() > 2 then
+				null:close()
+			end
+		end
+
+		-- replace with target command
+		nixio.exec("/bin/sh", "-c", command)
+	end
+end
+
+local function cleanup_baks(dir, token)
+  util.exec("rm -fr " .. dir .. "/" .. token)
+  util.exec("mkdir -p  " .. dir .. "/" .. token)
+end
+
+local function backup_configs(configlist, token)
+	local fs = require "nixio.fs"
+	local k
+	cleanup_baks(bak_configs, token)
+	for _, k in ipairs(configlist) do
+		fs.copy(get_confdir() .. '/' .. k, bak_configs .. '/' .. token .. '/' .. k)
+	end
+end
+
+local function backup_changes(token)
+	cleanup_baks(bak_changes, token)
+	util.exec("cp -R /tmp/.uci/* " .. bak_changes .. "/" .. token)
+end
+
+local function restore_configs(token)
+  if fs.access(bak_configs .. "/" .. token) then
+	  util.exec("cp -Rf ".. bak_configs .. "/" .. token .. "/* " .. uci:get_confdir())
+  end
+end
+
+local function restore_changes(token)
+  if fs.access(bak_changes .. "/" .. token) then
+	  util.exec("cp -Rf " .. bak_changes .. "/" .. token .. "/* /tmp/.uci")
+  end
+end
+
+local function create_confirm(token, sid)
+	-- local fs = "nixio.fs"
+	util.perror("mkdir -p %s && echo %s > %s" % {rollback_confirm, sid, rollback_confirm .. "/" .. token} )
+  util.exec("mkdir -p %s && echo %s > %s" % {rollback_confirm, sid, rollback_confirm .. "/" .. token}  )
+	-- fs.writefile(rollback_confirm .. "/" .. token, sid or "")
+end
+
+function apply(self, rollback, sid)
+	local rv, err
+	local configlist = {}
+	rv, err = self:changes()
+	local k
+	local token
+	local jsonc = require "luci.jsonc"
+
+	if not err then
+		if type(rv) == "table" then
+			for k in pairs(rv) do
+				table.insert( configlist, k )
+			end
+		end
+	end
+
+	if rollback then
+		local sys = require "luci.sys"
+		token = sys.uniqueid(16)
+		backup_configs(configlist, token)
+		backup_changes(token)
+		create_confirm(token, sid)
+	end
+
+	for _, k in ipairs(configlist) do
+		rv, err = call("commit", k)
+		if err then break	end
+	end
+
+	if not err then
+		if #configlist > 0 then
+			err = _apply(configlist)
+			if rollback then
+				fork_exec("lua " .. os.getenv("LUCI_SYSROOT") .. "/usr/libexec/uci_rollback.lua " .. token )
+				return token, err
+			end
+		else
+			err = 'No data'
+		end
+	else
+		if rollback then
+			restore_changes(token)
+			restore_configs(token)
+		end
+	end
+
+	return (err == nil), err
+end
+
+function confirm(self, token)
+	local fs = require "nixio.fs"
+	if fs.access(rollback_confirm .. "/" .. token) then
+		fs.remove(rollback_confirm .. "/" .. token)
+		return true
+	else
+		return false, "No data"
+	end
+end
+
+function rollback(self, token)
+	if token then
+		util.exec("lua " .. os.getenv("LUCI_SYSROOT") .. "/usr/libexec/uci_rollback.lua " .. token .. " " .. "rollback")
+	else
+		for token in (fs.dir(rollback_confirm .. "/") or function()end) do
+			util.exec("lua " .. os.getenv("LUCI_SYSROOT") .. "/usr/libexec/uci_rollback.lua " .. token .. " " .. "rollback")
+		end
+	end
+	if token then
+		return true
+	else
+		return false, "No data"
+	end
+end
+
+function rollback_pending(self)
+	local token
+	local fs = require "nixio.fs"
+	for token in (fs.dir(rollback_confirm .. "/") or function()end) do
+		break
+	end
+	if not token then
+		return false
+	else
+		return true, get("luci", "apply", "rollback"), fs.readfile(token), fs.basename(token)
+	end
 end

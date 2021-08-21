@@ -6,7 +6,7 @@ local function readfile(path)
 	return s and (s:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
-local methods = {
+local fubus_luci = {
 	getInitList = {
 		args = { name = "name" },
 		call = function(args)
@@ -58,13 +58,15 @@ local methods = {
 		call = function(args)
 			local util  = require "luci.util"
 			local zones = require "luci.sys.zoneinfo"
-
+			local uci = (require "luci.model.uci").cursor()
+		
 			local tz = readfile("/etc/TZ")
-			local res = util.ubus("uci", "get", {
-				config = "system",
-				section = "@system[0]",
-				option = "zonename"
-			})
+			local res = uci:get("system", "@system[0]", zonename)
+			-- local res = util.ubus("uci", "get", {
+			-- 	config = "system",
+			-- 	section = "@system[0]",
+			-- 	option = "zonename"
+			-- })
 
 			local result = {}
 			local _, zone
@@ -204,87 +206,87 @@ local methods = {
 			local rv = {}
 			local ok, fd
 			
-			-- rv.firewall      = fs.access("/sbin/fw3")
-			-- rv.opkg          = fs.access("/bin/opkg")
-			-- rv.offloading    = fs.access("/sys/module/xt_FLOWOFFLOAD/refcnt")
-			-- rv.br2684ctl     = fs.access("/usr/sbin/br2684ctl")
-			-- rv.swconfig      = fs.access("/sbin/swconfig")
-			-- rv.odhcpd        = fs.access("/usr/sbin/odhcpd")
-			-- rv.zram          = fs.access("/sys/class/zram-control")
-			-- rv.sysntpd       = fs.readlink("/usr/sbin/ntpd") and true
-			-- rv.ipv6          = fs.access("/proc/net/ipv6_route")
-			-- rv.dropbear      = fs.access("/usr/sbin/dropbear")
-			-- rv.cabundle      = fs.access("/etc/ssl/certs/ca-certificates.crt")
-			-- rv.relayd        = fs.access("/usr/sbin/relayd")
+			rv.firewall      = fs.access("/sbin/fw3")
+			rv.opkg          = fs.access("/bin/opkg")
+			rv.offloading    = fs.access("/sys/module/xt_FLOWOFFLOAD/refcnt")
+			rv.br2684ctl     = fs.access("/usr/sbin/br2684ctl")
+			rv.swconfig      = fs.access("/sbin/swconfig")
+			rv.odhcpd        = fs.access("/usr/sbin/odhcpd")
+			rv.zram          = fs.access("/sys/class/zram-control")
+			rv.sysntpd       = fs.readlink("/usr/sbin/ntpd") and true
+			rv.ipv6          = fs.access("/proc/net/ipv6_route")
+			rv.dropbear      = fs.access("/usr/sbin/dropbear")
+			rv.cabundle      = fs.access("/etc/ssl/certs/ca-certificates.crt")
+			rv.relayd        = fs.access("/usr/sbin/relayd")
 
-			-- local wifi_features = { "eap", "11n", "11ac", "11r", "acs", "sae", "owe", "suiteb192", "wep", "wps" }
+			local wifi_features = { "eap", "11n", "11ac", "11r", "acs", "sae", "owe", "suiteb192", "wep", "wps" }
 
-			-- if fs.access("/usr/sbin/hostapd") then
-			-- 	rv.hostapd = { cli = fs.access("/usr/sbin/hostapd_cli") }
+			if fs.access("/usr/sbin/hostapd") then
+				rv.hostapd = { cli = fs.access("/usr/sbin/hostapd_cli") }
 
-			-- 	local _, feature
-			-- 	for _, feature in ipairs(wifi_features) do
-			-- 		rv.hostapd[feature] =
-			-- 			(os.execute(string.format("/usr/sbin/hostapd -v%s >/dev/null 2>/dev/null", feature)) == 0)
-			-- 	end
-			-- end
+				local _, feature
+				for _, feature in ipairs(wifi_features) do
+					rv.hostapd[feature] =
+						(os.execute(string.format("/usr/sbin/hostapd -v%s >/dev/null 2>/dev/null", feature)) == 0)
+				end
+			end
 
-			-- if fs.access("/usr/sbin/wpa_supplicant") then
-			-- 	rv.wpasupplicant = { cli = fs.access("/usr/sbin/wpa_cli") }
+			if fs.access("/usr/sbin/wpa_supplicant") then
+				rv.wpasupplicant = { cli = fs.access("/usr/sbin/wpa_cli") }
 
-			-- 	local _, feature
-			-- 	for _, feature in ipairs(wifi_features) do
-			-- 		rv.wpasupplicant[feature] =
-			-- 			(os.execute(string.format("/usr/sbin/wpa_supplicant -v%s >/dev/null 2>/dev/null", feature)) == 0)
-			-- 	end
-			-- end
+				local _, feature
+				for _, feature in ipairs(wifi_features) do
+					rv.wpasupplicant[feature] =
+						(os.execute(string.format("/usr/sbin/wpa_supplicant -v%s >/dev/null 2>/dev/null", feature)) == 0)
+				end
+			end
 
-			-- ok, fd = pcall(io.popen, "dnsmasq --version 2>/dev/null")
-			-- if ok then
-			-- 	rv.dnsmasq = {}
+			ok, fd = pcall(io.popen, "dnsmasq --version 2>/dev/null")
+			if ok then
+				rv.dnsmasq = {}
 
-			-- 	while true do
-			-- 		local line = fd:read("*l")
-			-- 		if not line then
-			-- 			break
-			-- 		end
+				while true do
+					local line = fd:read("*l")
+					if not line then
+						break
+					end
 
-			-- 		local opts = line:match("^Compile time options: (.+)$")
-			-- 		if opts then
-			-- 			local opt
-			-- 			for opt in opts:gmatch("%S+") do
-			-- 				local no = opt:match("^no%-(%S+)$")
-			-- 				rv.dnsmasq[string.lower(no or opt)] = not no
-			-- 			end
-			-- 			break
-			-- 		end
-			-- 	end
+					local opts = line:match("^Compile time options: (.+)$")
+					if opts then
+						local opt
+						for opt in opts:gmatch("%S+") do
+							local no = opt:match("^no%-(%S+)$")
+							rv.dnsmasq[string.lower(no or opt)] = not no
+						end
+						break
+					end
+				end
 
-			-- 	fd:close()
-			-- end
+				fd:close()
+			end
 
-			-- ok, fd = pcall(io.popen, "ipset --help 2>/dev/null")
-			-- if ok then
-			-- 	rv.ipset = {}
+			ok, fd = pcall(io.popen, "ipset --help 2>/dev/null")
+			if ok then
+				rv.ipset = {}
 
-			-- 	local sets = false
+				local sets = false
 
-			-- 	while true do
-			-- 		local line = fd:read("*l")
-			-- 		if not line then
-			-- 			break
-			-- 		elseif line:match("^Supported set types:") then
-			-- 			sets = true
-			-- 		elseif sets then
-			-- 			local set, ver = line:match("^%s+(%S+)%s+(%d+)")
-			-- 			if set and not rv.ipset[set] then
-			-- 				rv.ipset[set] = tonumber(ver)
-			-- 			end
-			-- 		end
-			-- 	end
+				while true do
+					local line = fd:read("*l")
+					if not line then
+						break
+					elseif line:match("^Supported set types:") then
+						sets = true
+					elseif sets then
+						local set, ver = line:match("^%s+(%S+)%s+(%d+)")
+						if set and not rv.ipset[set] then
+							rv.ipset[set] = tonumber(ver)
+						end
+					end
+				end
 
-			-- 	fd:close()
-			-- end
+				fd:close()
+			end
 
 			return rv
 		end
@@ -613,64 +615,4 @@ local methods = {
 	}
 }
 
-local function parseInput()
-	local parse = json.new()
-	local done, err
-
-	while true do
-		local chunk = io.read(4096)
-		if not chunk then
-			break
-		elseif not done and not err then
-			done, err = parse:parse(chunk)
-		end
-	end
-
-	if not done then
-		print(json.stringify({ error = err or "Incomplete input" }))
-		os.exit(1)
-	end
-
-	return parse:get()
-end
-
-local function validateArgs(func, uargs)
-	local method = methods[func]
-	if not method then
-		print(json.stringify({ error = "Method not found" }))
-		os.exit(1)
-	end
-
-	if type(uargs) ~= "table" then
-		print(json.stringify({ error = "Invalid arguments" }))
-		os.exit(1)
-	end
-
-	uargs.ubus_rpc_session = nil
-
-	local k, v
-	local margs = method.args or {}
-	for k, v in pairs(uargs) do
-		if margs[k] == nil or
-		   (v ~= nil and type(v) ~= type(margs[k]))
-		then
-			print(json.stringify({ error = "Invalid arguments" }))
-			os.exit(1)
-		end
-	end
-
-	return method
-end
-
-local rpcd_luci = function()
-	if arg[1] == "list" then
-		local _, method, rv = nil, nil, {}
-		for _, method in pairs(methods) do rv[_] = method.args or {} end
-		return((json.stringify(rv):gsub(":%[%]", ":{}")))
-	elseif arg[1] == "call" then
-		local args = parseInput()
-		local method = validateArgs(arg[2], args)
-		local result, code = method.call(args)
-		return((json.stringify(result):gsub("^%[%]$", "{}")))
-	end
-end
+return fubus_luci

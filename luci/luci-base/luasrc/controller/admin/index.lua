@@ -7,9 +7,11 @@ function action_logout()
 	local dsp = require "luci.dispatcher"
 	local utl = require "luci.util"
 	local sid = dsp.context.authsession
+	local sauth = require "luci.sauth"
 
 	if sid then
-		utl.ubus("session", "destroy", { ubus_rpc_session = sid })
+		sauth.kill(sid)
+		-- utl.ubus("session", "destroy", { ubus_rpc_session = sid })
 
 		luci.http.header("Set-Cookie", "sysauth=%s; expires=%s; path=%s" %{
 			'', 'Thu, 01 Jan 1970 01:00:00 GMT', dsp.build_url()
@@ -56,30 +58,32 @@ local function ubus_reply(id, data, code, errmsg)
 	return reply
 end
 
-local ubus_types = {
-	nil,
-	"array",
-	"object",
-	"string",
-	nil, -- INT64
-	"number",
-	nil, -- INT16,
-	"boolean",
-	"double"
-}
+-- local ubus_types = {
+-- 	nil,
+-- 	"array",
+-- 	"object",
+-- 	"string",
+-- 	nil, -- INT64
+-- 	"number",
+-- 	nil, -- INT16,
+-- 	"boolean",
+-- 	"double"
+-- }
 
 local function ubus_access(sid, obj, fun)
-	local res, code = luci.util.ubus("session", "access", {
-		ubus_rpc_session = sid,
-		scope            = "ubus",
-		object           = obj,
-		["function"]     = fun
-	})
+	-- local res, code = luci.util.ubus("session", "access", {
+	-- 	ubus_rpc_session = sid,
+	-- 	scope            = "ubus",
+	-- 	object           = obj,
+	-- 	["function"]     = fun
+	-- })
 
-	return (type(res) == "table" and res.access == true)
+	-- return (type(res) == "table" and res.access == true)
+	return true
 end
 
 local function ubus_request(req)
+	local fubus = require "luci.model.fubus"
 	if type(req) ~= "table" or type(req.method) ~= "string" or req.jsonrpc ~= "2.0" or req.id == nil then
 		return ubus_reply(nil, nil, -32600, "Invalid request")
 
@@ -98,18 +102,21 @@ local function ubus_request(req)
 			sid = luci.dispatcher.context.authsession
 		end
 
+		-- 检查许可
 		if not ubus_access(sid, obj, fun) then
 			return ubus_reply(req.id, nil, -32002, "Access denied")
 		end
 
 		arg.ubus_rpc_session = sid
 
-		local res, code = luci.util.ubus(obj, fun, arg)
+		local res, code = fubus.fake("call", obj, fun, arg)
 		return ubus_reply(req.id, res, code or 0)
 
 	elseif req.method == "list" then
 		if req.params == nil or (type(req.params) == "table" and #req.params == 0) then
-			local objs = luci.util.ubus()
+			-- global query
+			local objs = fubus.fake("list")
+
 			return ubus_reply(req.id, nil, objs)
 
 		elseif type(req.params) == "table" then
@@ -119,7 +126,7 @@ local function ubus_request(req)
 					return ubus_reply(req.id, nil, -32602, "Invalid parameters")
 				end
 
-				local sig = luci.util.ubus(req.params[n])
+				local sig = fubus.fake("list", req.params[n])
 				if sig and type(sig) == "table" then
 					rv[req.params[n]] = {}
 
@@ -130,7 +137,7 @@ local function ubus_request(req)
 
 							local pn, pt
 							for pn, pt in pairs(p) do
-								rv[req.params[n]][m][pn] = ubus_types[pt] or "unknown"
+								rv[req.params[n]][m][pn] = type(pt) or "unknown"
 							end
 						end
 					end
@@ -187,9 +194,11 @@ function action_menu()
 	local dsp = require "luci.dispatcher"
 	local utl = require "luci.util"
 	local http = require "luci.http"
-
-	local acls = utl.ubus("session", "access", { ubus_rpc_session = http.getcookie("sysauth") })
-	local menu = dsp.menu_json(acls or {}) or {}
+-- TODO: UBUS FAKE
+	-- local acls = utl.ubus("session", "access", { ubus_rpc_session = http.getcookie("sysauth") })
+	local sauth = require "luci.sauth"
+	local acls = sauth.access({ ubus_rpc_session = http.getcookie("sysauth") }) 
+	local menu = acls["access-group"] and dsp.menu_json(acls or {}) or {}
 
 	http.prepare_content("application/json")
 	http.write_json(menu)
