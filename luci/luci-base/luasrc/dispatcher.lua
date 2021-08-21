@@ -412,7 +412,6 @@ function error404(message)
 end
 
 function error500(message)
-	util.perror(message)
 	if not context.template_header_sent then
 		http.status(500, "Internal Server Error")
 		http.prepare_content("text/plain")
@@ -1179,7 +1178,7 @@ function createtree_json()
 	local files = {}
 	local cachefile
 
-	for file in (fs.glob("/tmp/.luci/usr/share/luci/menu.d/*.json") or function() end) do
+	for file in (fs.glob(os.getenv("LUCI_SYSROOT") .. "/usr/share/luci/menu.d/*.json") or function() end) do
 		files[#files+1] = file
 	end
 

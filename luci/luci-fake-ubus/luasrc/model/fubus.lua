@@ -57,6 +57,7 @@ fubus.fake = function(method, obj, func, args)
 				rv[_] = f.args or {}
 			end
 		else
+			-- global query
 			for f, _ in pairs(fubus) do
 				if type(_) == "table" then
 					table.insert( rv, f )

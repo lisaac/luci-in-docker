@@ -399,7 +399,6 @@ end
 
 local function create_confirm(token, sid)
 	-- local fs = "nixio.fs"
-	util.perror("mkdir -p %s && echo %s > %s" % {rollback_confirm, sid, rollback_confirm .. "/" .. token} )
   util.exec("mkdir -p %s && echo %s > %s" % {rollback_confirm, sid, rollback_confirm .. "/" .. token}  )
 	-- fs.writefile(rollback_confirm .. "/" .. token, sid or "")
 end

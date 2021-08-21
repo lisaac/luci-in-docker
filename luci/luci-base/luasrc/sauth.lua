@@ -71,20 +71,22 @@ function read(id)
 	if not id or #id == 0 then
 		return nil
 	end
-
+	if id ~= "00000000000000000000000000000000" then
 	assert(_checkid(id), "Security Exception: Session ID is invalid!")
 
 	if not sane(sessionpath .. "/" .. id) then
 		return nil
 	end
-
-	local sess = json.parse(_read(id) or "")
-	if sess.atime and sess.atime + sessiontime < luci.sys.uptime() then
-		kill(id)
-		return nil
 	end
-	-- refresh atime in session
-	write(id, sess)
+	local sess = json.parse(_read(id) or "")
+	if id ~= "00000000000000000000000000000000" then
+		if sess.atime and sess.atime + sessiontime < luci.sys.uptime() then
+			kill(id)
+			return nil
+		end
+		-- refresh atime in session
+		write(id, sess)
+	end
 
 	return sess
 end
@@ -175,7 +177,7 @@ function gen_acls(user)
 	local acls = {}
 	local access_groups = {}
 
-	for file in (fs.glob("/tmp/.luci/usr/share/rpcd/acl.d/*.json") or function()
+	for file in (fs.glob(os.getenv("LUCI_SYSROOT") .. "/usr/share/rpcd/acl.d/*.json") or function()
 		end) do
 		acl_files[#acl_files + 1] = file
 	end
@@ -224,23 +226,23 @@ function setup(user, pass)
 	return nil
 end
 
-function access(args)
-	local sess = read(args.ubus_rpc_session)
+function access(sid, scope, obj, func)
+	local sess = read(sid)
 	if sess then
-		if args.scope and args.object and args["function"] then
-			if sess.acls[args.scope] and sess.acls[args.scope][args.object] and type(sess.acls[args.scope][args.object]) == "table" then
-				for _, v in ipairs(sess.acls[args.scope][args.object]) do
-					if args["function"] == v then
+		if scope and obj and func then
+			if sess.acls[scope] and sess.acls[scope][obj] and type(sess.acls[scope][obj]) == "table" then
+				for _, v in ipairs(sess.acls[scope][obj]) do
+					if func == v then
 						return {access = true}
 					end
 				end
 			else
-				return {}
+				return
 			end
 		else
 			return sess.acls
 		end
 	else
-		return {}
+		return
 	end
 end

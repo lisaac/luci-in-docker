@@ -58,32 +58,9 @@ local function ubus_reply(id, data, code, errmsg)
 	return reply
 end
 
--- local ubus_types = {
--- 	nil,
--- 	"array",
--- 	"object",
--- 	"string",
--- 	nil, -- INT64
--- 	"number",
--- 	nil, -- INT16,
--- 	"boolean",
--- 	"double"
--- }
-
-local function ubus_access(sid, obj, fun)
-	-- local res, code = luci.util.ubus("session", "access", {
-	-- 	ubus_rpc_session = sid,
-	-- 	scope            = "ubus",
-	-- 	object           = obj,
-	-- 	["function"]     = fun
-	-- })
-
-	-- return (type(res) == "table" and res.access == true)
-	return true
-end
-
 local function ubus_request(req)
 	local fubus = require "luci.model.fubus"
+	local sauth = require "luci.sauth"
 	if type(req) ~= "table" or type(req.method) ~= "string" or req.jsonrpc ~= "2.0" or req.id == nil then
 		return ubus_reply(nil, nil, -32600, "Invalid request")
 
@@ -103,7 +80,7 @@ local function ubus_request(req)
 		end
 
 		-- 检查许可
-		if not ubus_access(sid, obj, fun) then
+		if not sauth.access(sid, "ubus", obj, fun) then
 			return ubus_reply(req.id, nil, -32002, "Access denied")
 		end
 
@@ -197,7 +174,7 @@ function action_menu()
 -- TODO: UBUS FAKE
 	-- local acls = utl.ubus("session", "access", { ubus_rpc_session = http.getcookie("sysauth") })
 	local sauth = require "luci.sauth"
-	local acls = sauth.access({ ubus_rpc_session = http.getcookie("sysauth") }) 
+	local acls = sauth.access(http.getcookie("sysauth")) or {}
 	local menu = acls["access-group"] and dsp.menu_json(acls or {}) or {}
 
 	http.prepare_content("application/json")

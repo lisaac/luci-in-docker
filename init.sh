@@ -131,15 +131,22 @@ merge_luci_root() {
   umount /etc/rc.common 2&> /dev/null
   mount -o bind $LUCI_SYSROOT/etc/rc.common /etc/rc.common
 
-  echo "Mounting /www"
+  echo "Mounting /www.."
   mkdir -p /www
   umount /www 2&> /dev/null
   mount -o bind $LUCI_SYSROOT/www /www
+
+  echo "Creating nobody session.."
+  mkdir -p /tmp/luci-sessions
+  echo '{"acls":{"access-group":{"unauthenticated":["read"]},"ubus":{"luci":["getFeatures"],"session":["access","login"]}},"data":{},"atime":-1,"session":"00000000000000000000000000000000"}' > /tmp/luci-sessions/00000000000000000000000000000000 && \
+  chmod 700 /tmp/luci-sessions && \
+  chmod 600 /tmp/luci-sessions/00000000000000000000000000000000
 }
 
 start_uhttpd() {
   echo "Starting uhttpd.."
-  rm -fr /tmp/luci-*
+  rm -fr /tmp/luci-modulecache
+  rm -fr /tmp/luci-indexcache*
   $LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -h $LUCI_SYSROOT/www -f &
 }
 
