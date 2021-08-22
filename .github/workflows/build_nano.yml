@@ -31,5 +31,5 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          file: {context}/container/Dockerfile.nano
+          file: container/Dockerfile.nano
           tags: lisaac/luci:latest
