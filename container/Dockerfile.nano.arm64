@@ -1,6 +1,6 @@
 FROM arm64v8/alpine:3.12 as compile_stage
 
-ENV LUCI_BIN_ROOT='/tmp/internal/luci-bin/root' LUCI_BIN='/tmp/internal/luci-bin' INTERNAL_PLUGIN_DIR='/tmp/internal'
+ENV LUCI_BIN_ROOT='/tmp/internal/000luci-bin/root' LUCI_BIN='/tmp/internal/luci-bin' INTERNAL_PLUGIN_DIR='/tmp/internal'
 
 COPY luci $INTERNAL_PLUGIN_DIR/
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
