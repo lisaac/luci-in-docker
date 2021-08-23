@@ -1192,7 +1192,7 @@ msgid "Changes have been reverted."
 msgstr ""
 
 #: modules/luci-mod-system/htdocs/luci-static/resources/view/system/password.js:46
-msgid "Changes the administrator password for accessing the device"
+msgid "Changes the administrator password for accessing the LuCI"
 msgstr ""
 
 #: modules/luci-compat/luasrc/view/cbi/wireless_modefreq.htm:162
@@ -5828,7 +5828,7 @@ msgstr ""
 
 #: modules/luci-mod-system/htdocs/luci-static/resources/view/system/password.js:46
 #: modules/luci-mod-system/root/usr/share/luci/menu.d/luci-mod-system.json:26
-msgid "Router Password"
+msgid "LuCI Password"
 msgstr ""
 
 #: modules/luci-mod-network/htdocs/luci-static/resources/view/network/routes.js:15

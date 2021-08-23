@@ -43,7 +43,7 @@ return view.extend({
 	render: function() {
 		var m, s, o;
 
-		m = new form.JSONMap(formData, _('Router Password'), _('Changes the administrator password for accessing the device'));
+		m = new form.JSONMap(formData, _('LuCI Password'), _('Changes the administrator password for accessing the LuCI'));
 		m.readonly = !L.hasViewPermission();
 
 		s = m.section(form.NamedSection, 'password', 'password');

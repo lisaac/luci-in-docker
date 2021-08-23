@@ -23,7 +23,7 @@
 	},
 
 	"admin/system/admin/password": {
-		"title": "Router Password",
+		"title": "LuCI Password",
 		"order": 1,
 		"action": {
 			"type": "view",

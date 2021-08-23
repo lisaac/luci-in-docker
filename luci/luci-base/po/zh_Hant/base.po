@@ -1225,7 +1225,7 @@ msgid "Changes have been reverted."
 msgstr "設定值已還原."
 
 #: modules/luci-mod-system/htdocs/luci-static/resources/view/system/password.js:46
-msgid "Changes the administrator password for accessing the device"
+msgid "Changes the administrator password for accessing the LuCI"
 msgstr "修改可存取這設備的管理員密碼"
 
 #: modules/luci-compat/luasrc/view/cbi/wireless_modefreq.htm:162
@@ -5924,8 +5924,8 @@ msgstr ""
 
 #: modules/luci-mod-system/htdocs/luci-static/resources/view/system/password.js:46
 #: modules/luci-mod-system/root/usr/share/luci/menu.d/luci-mod-system.json:26
-msgid "Router Password"
-msgstr "路由器密碼"
+msgid "LuCI Password"
+msgstr "LuCI密碼"
 
 #: modules/luci-mod-network/htdocs/luci-static/resources/view/network/routes.js:15
 #: modules/luci-mod-status/htdocs/luci-static/resources/view/status/routes.js:197
