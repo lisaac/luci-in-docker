@@ -87,6 +87,25 @@ merge() {
   [ -f "$src/postinst" ] && echo -e "\tExecuting postinst.."  && chmod +x $src/postinst && $src/postinst
 }
 
+merge_plugins() {
+  directory=$1
+  for d in $(find $directory/* -maxdepth 0 -type d | sort -g)
+  do
+    local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
+    # 跳过_开头的插件
+    [ -n "$valid_d" ] && {
+      local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';' | sort -g)
+      # 插件中存在 makefile, 则认定其为有效插件
+      [ -n "$valid_d2" ] && {
+        for plugin in $valid_d2
+        do
+          merge $plugin $LUCI_SYSROOT
+        done
+      }
+    }
+  done
+}
+
 merge_luci_root() {
   echo "MERGING LUCI ROOT.."
   mkdir -p $LUCI_SYSROOT
@@ -95,36 +114,10 @@ merge_luci_root() {
   rm -fr $LUCI_SYSROOT/*
 
   echo "MERGING INTERNAL PLUGIN.."
-  for d in $INTERNAL_PLUGIN_DIR/*
-  do
-    local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
-    [ -n "$valid_d" ] && {
-      local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';')
-        # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
-      [ -n "$valid_d2" ] && {
-        for v_d in $valid_d2
-        do
-          merge $v_d $LUCI_SYSROOT
-        done
-      }
-    }
-  done
+  merge_plugins $INTERNAL_PLUGIN_DIR
 
   echo "MERGING EXTERNAL PLUGIN.."
-  for d in $PLUGIN_DIR/*
-  do
-    local valid_d=$(echo $d | awk -F'/' '{print $NF}' | grep -E "^[^_]+")
-    [ -n "$valid_d" ] && {
-      local valid_d2=$(find $d -iname Makefile -type f -exec dirname {} ';')
-        # 目录中存在 makefile 则认定其为 luasrc/root/po/htdoc 有效目录
-      [ -n "$valid_d2" ] && {
-        for v_d in $valid_d2
-        do
-          merge $v_d $LUCI_SYSROOT
-        done
-      }
-    }
-  done
+  merge_plugins $PLUGIN_DIR
 
   chmod +x $LUCI_SYSROOT/etc/init.d/*
 

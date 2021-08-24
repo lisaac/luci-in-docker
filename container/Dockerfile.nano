@@ -79,7 +79,7 @@ ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_P
 ENV IPKG_INSTROOT=$LUCI_SYSROOT LD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH PATH=$LUCI_SYSROOT/bin:$LUCI_SYSROOT/sbin:$LUCI_SYSROOT/usr/sbin:$LUCI_SYSROOT/usr/bin:$PATH LUA_PATH=$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/init.lua;; LUA_CPATH=$LUCI_SYSROOT/usr/lib/lua/?.so;; DYLD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH
 
 COPY init.sh /
-COPY --from=compile_stage /tmp/internal $INTERNAL_PLUGIN_DIR/luci/
+COPY --from=compile_stage /tmp/internal $INTERNAL_PLUGIN_DIR/000luci/
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk --no-cache update && \
