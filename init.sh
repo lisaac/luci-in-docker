@@ -165,11 +165,8 @@ mount_config() {
   umount /etc/rc.local 2&> /dev/null
   mount -o bind $CONFIG_DIR/rc.local /etc/rc.local
 
-  echo "Mounting shadow.."
-  [ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow
-  [ ! -f "/etc/shadow" ] && touch /etc/shadow
-  umount /etc/shadow 2&> /dev/null
-  mount -o bind $CONFIG_DIR/shadow /etc/shadow
+  echo "Updating shadow.."
+  [ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow || cp $CONFIG_DIR/shadow /etc/shadow 
 }
 
 run_rcloal() {

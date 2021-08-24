@@ -441,7 +441,7 @@ local fubus_luci = {
 		call = function(args)
 			local util = require "luci.util"
 			return {
-				result = (os.execute("(echo %s; sleep 1; echo %s) | passwd %s >/dev/null 2>&1" %{
+				result = (os.execute("(echo %s; sleep 1; echo %s) | passwd %s >/dev/null 2>&1 && cp /etc/shadow /external/cfg.d/shadow" %{
 					luci.util.shellquote(args.password),
 					luci.util.shellquote(args.password),
 					luci.util.shellquote(args.username)
