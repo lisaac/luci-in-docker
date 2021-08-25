@@ -1,12 +1,14 @@
 local json = require "luci.jsonc"
+local fs = require "nixio.fs"
 
-local fubus = {
-	file = require "luci.model.fubus.file",
-	luci = require "luci.model.fubus.luci",
-	uci = require "luci.model.fubus.uci",
-	session = require "luci.model.fubus.session",
-	system = require "luci.model.fubus.system"
-}
+local fubus = {}
+local SYSROOT = os.getenv("LUCI_SYSROOT") or ""
+local p
+
+for p in fs.dir("%s/usr/lib/lua/luci/model/fubus" % SYSROOT) do
+	p = p:match("(.-).lua")
+	fubus[p] = require("luci.model.fubus.%s" % p)
+end
 
 local function parseInput()
 	local parse = json.new()
@@ -50,31 +52,38 @@ local function validateArgs(obj, func, uargs)
 end
 
 fubus.fake = function(method, obj, func, args)
-	if method == "list" then
-		local _, f, rv = nil, nil, {}
-		if obj then
-			for _, f in pairs(fubus[obj]) do
-				rv[_] = f.args or {}
-			end
-		else
-			-- global query
-			for f, _ in pairs(fubus) do
-				if type(_) == "table" then
-					table.insert( rv, f )
+	local fs = require "nixio.fs"
+	if fubus[obj] then
+		if method == "list" then
+			local _, f, rv = nil, nil, {}
+			if obj then
+				for _, f in pairs(fubus[obj]) do
+					rv[_] = f.args or {}
+				end
+			else
+				-- global query
+				for f, _ in pairs(fubus) do
+					if type(_) == "table" then
+						table.insert( rv, f )
+					end
 				end
 			end
+			return rv
+		elseif method == "call" then
+			-- local args = parseInput()
+			local f = validateArgs(obj, func, args)
+			if f and f.call and type(f.call) == "function" then
+				local result,	code = f.call(args)
+				-- return (json.stringify(result):gsub("^%[%]$", "{}"))
+				return result
+			else
+				return f
+			end
 		end
-		return rv
-	elseif method == "call" then
-		-- local args = parseInput()
-		local f = validateArgs(obj, func, args)
-		if f and f.call and type(f.call) == "function" then
-			local result,	code = f.call(args)
-			-- return (json.stringify(result):gsub("^%[%]$", "{}"))
-			return result
-		else
-			return f
-		end
+	elseif fs.access("%s/usr/libexec/rpcd/%s" % {SYSROOT, obj}) then
+		local jsonc = require "luci.jsonc"
+		local res = luci.util.exec("echo %s | %s/usr/libexec/rpcd/%s %s %s " % {luci.util.shellquote(jsonc.stringify(args or {})), SYSROOT or "", obj, method or "list", func or ""} )
+		return jsonc.parse(res)
 	end
 end
 
