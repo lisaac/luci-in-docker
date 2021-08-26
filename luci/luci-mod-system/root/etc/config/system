@@ -1,0 +1,5 @@
+config system
+        option timezone 'UTC'
+        option zonename 'UTC'
+        option log_proto 'udp'
+        option hostname 'LuCI'
