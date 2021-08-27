@@ -53,7 +53,14 @@ local fubus_luci = {
 			return { result = args.localtime }
 		end
 	},
-
+	restart = {
+		args = {},
+		call = function(args)
+			local sys = require "luci.sys"
+			-- luci.sys.process.exec({"kill -9 $(pidof tail)"}, nil, nil, true)
+			luci.util.exec("kill -9 $(pidof tail)")
+		end
+	},
 	getTimezones = {
 		call = function(args)
 			local util  = require "luci.util"

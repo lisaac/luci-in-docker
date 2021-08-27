@@ -5,8 +5,8 @@
 'require uci';
 
 var callReboot = rpc.declare({
-	object: 'system',
-	method: 'reboot',
+	object: 'luci',
+	method: 'restart',
 	expect: { result: 0 }
 });
 
@@ -56,7 +56,21 @@ return view.extend({
 
 			L.ui.awaitReconnect();
 		})
-		.catch(function(e) { L.ui.addNotification(null, E('p', e.message)) });
+		.catch(function(e) { 
+			L.ui.showModal(_('Rebooting…'), [
+				E('p', { 'class': 'spinning' }, _('Waiting for device...'))
+			]);
+
+			window.setTimeout(function() {
+				L.ui.showModal(_('Rebooting…'), [
+					E('p', { 'class': 'spinning alert-message warning' },
+						_('Device unreachable! Still waiting for device...'))
+				]);
+			}, 150000);
+
+			L.ui.awaitReconnect();
+			// L.ui.addNotification(null, E('p', e.message)) 
+		});
 	},
 
 	handleSaveApply: null,

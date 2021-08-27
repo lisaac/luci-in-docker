@@ -340,32 +340,6 @@ function _apply(configlist, command)
 	end
 end
 
-
-local function fork_exec(command)
-	local nixio = require "nixio"
-	local pid = nixio.fork()
-	if pid > 0 then
-		return
-	elseif pid == 0 then
-		-- change to root dir
-		nixio.chdir("/")
-
-		-- patch stdin, out, err to /dev/null
-		local null = nixio.open("/dev/null", "w+")
-		if null then
-			nixio.dup(null, nixio.stderr)
-			nixio.dup(null, nixio.stdout)
-			nixio.dup(null, nixio.stdin)
-			if null:fileno() > 2 then
-				null:close()
-			end
-		end
-
-		-- replace with target command
-		nixio.exec("/bin/sh", "-c", command)
-	end
-end
-
 local function cleanup_baks(dir, token)
   util.exec("rm -fr " .. dir .. "/" .. token)
   util.exec("mkdir -p  " .. dir .. "/" .. token)
@@ -436,7 +410,7 @@ function apply(self, rollback, sid)
 		if #configlist > 0 then
 			err = _apply(configlist)
 			if rollback then
-				fork_exec("lua " .. os.getenv("LUCI_SYSROOT") .. "/usr/libexec/uci_rollback.lua " .. token )
+				util.fork_exec("lua " .. os.getenv("LUCI_SYSROOT") .. "/usr/libexec/uci_rollback.lua " .. token )
 				return token, err
 			end
 		else
