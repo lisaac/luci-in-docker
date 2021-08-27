@@ -1,17 +1,8 @@
 --[[
-
-Session authentication
-(c) 2008 Steven Barth <steven@midlink.org>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-
-]] --
+LuCI - Lua Configuration Interface
+Copyright 2021 lisaac <https://github.com/lisaac/luci-in-docker>
+Session authentication(c) 2008 Steven Barth <steven@midlink.org>
+]]--
 
 --- LuCI session library.
 module("luci.sauth", package.seeall)
@@ -72,11 +63,10 @@ function read(id)
 		return nil
 	end
 	if id ~= "00000000000000000000000000000000" then
-	assert(_checkid(id), "Security Exception: Session ID is invalid!")
-
-	if not sane(sessionpath .. "/" .. id) then
-		return nil
-	end
+		assert(_checkid(id), "Security Exception: Session ID is invalid!")
+		if not sane(sessionpath .. "/" .. id) then
+			return nil
+		end
 	end
 	local sess = json.parse(_read(id) or "")
 	if id ~= "00000000000000000000000000000000" then

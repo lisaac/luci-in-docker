@@ -1,5 +1,8 @@
--- Copyright 2008 Steven Barth <steven@midlink.org>
--- Licensed to the public under the Apache License 2.0.
+--[[
+LuCI - Lua Configuration Interface
+Copyright 2021 lisaac <https://github.com/lisaac/luci-in-docker>
+Copyright 2008 Steven Barth <steven@midlink.org>
+]]--
 
 local os    = require "os"
 local util  = require "luci.util"

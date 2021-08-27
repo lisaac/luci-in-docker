@@ -3,6 +3,7 @@ FROM alpine:3.12 as compile_stage
 ENV LUCI_BIN_ROOT='/tmp/internal/000luci-bin/root' LUCI_BIN='/tmp/internal/000luci-bin' INTERNAL_PLUGIN_DIR='/tmp/internal'
 
 COPY luci $INTERNAL_PLUGIN_DIR/
+COPY src/cgi-io /tmp/
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
 #sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
 RUN apk update && \
@@ -55,8 +56,11 @@ RUN apk update && \
     make parser.so && \
     make po2lmo && \
     make jsmin && \
+    # cgi-io
+    cd /tmp/cgi-io && \
+    cmake . && make &&\
     # copy to dst
-    mkdir -p $LUCI_BIN_ROOT/usr/lib $LUCI_BIN_ROOT/usr/lib/lua $LUCI_BIN_ROOT/usr/sbin $LUCI_BIN_ROOT/usr/bin $LUCI_BIN_ROOT/usr/local/share/libubox/ $LUCI_BIN_ROOT/usr/lib/lua/luci/template $LUCI_BIN_ROOT/www && \
+    mkdir -p $LUCI_BIN_ROOT/usr/lib $LUCI_BIN_ROOT/usr/lib/lua $LUCI_BIN_ROOT/usr/sbin $LUCI_BIN_ROOT/usr/bin $LUCI_BIN_ROOT/usr/local/share/libubox/ $LUCI_BIN_ROOT/usr/lib/lua/luci/template $LUCI_BIN_ROOT/www/cgi-bin && \
     touch $LUCI_BIN/Makefile && \
     cp /tmp/libubox/*.so $LUCI_BIN_ROOT/usr/lib/ && cp /tmp/libubox/lua/*.so $LUCI_BIN_ROOT/usr/lib/lua/ && cp /tmp/libubox/jshn $LUCI_BIN_ROOT/usr/bin && cp /tmp/libubox/sh/jshn.sh $LUCI_BIN_ROOT/usr/local/share/libubox/ && \
     cp /tmp/ustream-ssl/*.so $LUCI_BIN_ROOT/usr/lib/ && \
@@ -69,7 +73,11 @@ RUN apk update && \
     cp /tmp/lucihttp/lucihttp.so $LUCI_BIN_ROOT/usr/lib/lua && cp /tmp/lucihttp/liblucihttp.so* $LUCI_BIN_ROOT/usr/lib && \
     cp /tmp/luci/modules/luci-base/src/po2lmo $LUCI_BIN_ROOT/usr/sbin/ && \
     cp /tmp/luci/modules/luci-base/src/jsmin $LUCI_BIN_ROOT/usr/sbin/ && \
-    cp /tmp/luci/modules/luci-base/src/parser.so $LUCI_BIN_ROOT/usr/lib/lua/luci/template
+    cp /tmp/luci/modules/luci-base/src/parser.so $LUCI_BIN_ROOT/usr/lib/lua/luci/template && \
+    cp /tmp/cgi-io/cgi-io $LUCI_BIN_ROOT/www/cgi-bin/ && \
+    ln -s $LUCI_BIN_ROOT/www/cgi-bin/cgi-io $LUCI_BIN_ROOT/www/cgi-bin/cgi-exec && \
+    ln -s $LUCI_BIN_ROOT/www/cgi-bin/cgi-io $LUCI_BIN_ROOT/www/cgi-bin/cgi-download && \
+    ln -s $LUCI_BIN_ROOT/www/cgi-bin/cgi-io $LUCI_BIN_ROOT/www/cgi-bin/cgi-upload
 
 FROM alpine:latest
 

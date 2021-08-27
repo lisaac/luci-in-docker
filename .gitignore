@@ -1,2 +1,3 @@
 luci/luci-bin
 luci/_luci-bin
+src/**/build/

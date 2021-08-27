@@ -1,3 +1,8 @@
+--[[
+LuCI - Lua Configuration Interface
+Copyright 2021 lisaac <https://github.com/lisaac/luci-in-docker>
+]]--
+
 local fs = require "nixio.fs"
 
 local function readfile(path)

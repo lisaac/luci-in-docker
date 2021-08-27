@@ -1,3 +1,8 @@
+--[[
+LuCI - Lua Configuration Interface
+Copyright 2021 lisaac <https://github.com/lisaac/luci-in-docker>
+]]--
+
 local sauth = require "luci.sauth"
 
 local fubus_session = {
