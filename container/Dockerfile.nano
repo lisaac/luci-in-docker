@@ -6,7 +6,7 @@ COPY luci $INTERNAL_PLUGIN_DIR/
 COPY src /tmp/
 #sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
 #sed -i -e '/^http:\/\/.*\/main/h' -e'$G' -e '${s|\(^http://.*/\)main|\1testing|}' /etc/apk/repositories && \
-RUN apk update && \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && apk update && \
     apk add git cmake make gcc libc-dev json-c-dev lua5.1 lua5.1-dev openssl-dev linux-headers && \
     # libubox
     cd /tmp && git clone --depth=1 https://git.openwrt.org/project/libubox.git && \
