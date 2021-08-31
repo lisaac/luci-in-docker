@@ -1,9 +1,11 @@
 #!/bin/sh
 
+PLUGIN_DIR='/external/plugin'
+CONFIG_DIR='/external/cfg.d'
+UCI_CONFIG_DIR='/etc/config'
+INTERNAL_PLUGIN_DIR='/internal/plugin'
+
 init_env() {
-	export PLUGIN_DIR='/external/plugin'
-	export CONFIG_DIR='/external/cfg.d'
-	export INTERNAL_PLUGIN_DIR='/internal/plugin'
 	export LUCI_SYSROOT='/tmp/.luci'
 	export IPKG_INSTROOT=$LUCI_SYSROOT
 	export LD_LIBRARY_PATH="$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH"
@@ -29,16 +31,18 @@ merge() {
 	#合并root
 	[ -d "$src/root" ] && cp -R $src/root/. $dst/ &&\
 	#合并config
-	mkdir -p $dst/etc/config
-	if [ -d "$src/root/etc/config" ]; then
-		for cfg in $src/root/etc/config/*
+	# mkdir -p $dst/etc/config
+	if [ -d "$src/root/$UCI_CONFIG_DIR" ]; then
+		for cfg in $src/root/$UCI_CONFIG_DIR/*
 		do
 			if [ -f "$cfg" ]; then
 				cfg_name=$(echo $cfg | awk -F'/' '{print $NF}')
-				[ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
+				# [ ! -f $CONFIG_DIR/config/$cfg_name ] && cp $cfg $CONFIG_DIR/config/
+				[ ! -f $UCI_CONFIG_DIR/$cfg_name ] && cp $cfg $UCI_CONFIG_DIR/
 			elif [ -d "$cfg" ]; then
 				cfg_name=$(basename $cfg)
-				[ ! -d $CONFIG_DIR/config/$cfg_name ] && cp -R $cfg $CONFIG_DIR/config/
+				# [ ! -d $CONFIG_DIR/config/$cfg_name ] && cp -R $cfg $CONFIG_DIR/config/
+				[ ! -d $UCI_CONFIG_DIR/$cfg_name ] && cp -R $cfg $UCI_CONFIG_DIR/
 			fi
 		done
 	fi
@@ -84,7 +88,6 @@ merge() {
 			[ -n "$(echo $depend | grep -E '^[^_]+')" ] && \
 			[ -z "$(echo $installed_apk | grep $depend)" ] && {
 				need_install="$need_install $depend"
-				echo $depend
 			}
 		done
 		[ -n "$need_install" ] && log_info "\tInstalling depends: $need_install .." && apk add $need_install
@@ -127,15 +130,12 @@ merge_luci_root() {
 
 	chmod +x $LUCI_SYSROOT/etc/init.d/*
 
-	log_info "Mounting rc.common.."
-	touch /etc/rc.common
-	umount /etc/rc.common 2&> /dev/null
-	mount -o bind $LUCI_SYSROOT/etc/rc.common /etc/rc.common
+	log_info "Linking rc.common.."
+	ln -sf $LUCI_SYSROOT/etc/rc.common /etc/rc.common
 
-	log_info "Mounting /www.."
-	mkdir -p /www
-	umount /www 2&> /dev/null
-	mount -o bind $LUCI_SYSROOT/www /www
+	log_info "Linking /www.."
+	rm /www
+	ln -sf $LUCI_SYSROOT/www /www
 
 	log_info "Creating nobody session.."
 	mkdir -p /tmp/luci-sessions
@@ -152,18 +152,15 @@ start_uhttpd() {
 	$LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -h $LUCI_SYSROOT/www -f &
 }
 
-mount_config() {
-	log_info "Mounting config.."
-	mkdir -p /etc/config
+link_config() {
+	log_info "Linking config.."
+	rm $UCI_CONFIG_DIR
 	mkdir -p $CONFIG_DIR/config
-	umount /etc/config 2&> /dev/null
-	mount -o bind $CONFIG_DIR/config /etc/config
+	ln -sf $CONFIG_DIR/config $UCI_CONFIG_DIR
 
-	log_info "Mounting rc.local.."
+	log_info "Linking rc.local.."
 	[ ! -f "$CONFIG_DIR/rc.local" ] && touch $CONFIG_DIR/rc.local
-	[ ! -f "/etc/rc.local" ] && touch /etc/rc.local
-	umount /etc/rc.local 2&> /dev/null
-	mount -o bind $CONFIG_DIR/rc.local /etc/rc.local
+	ln -sf $CONFIG_DIR/rc.local /etc/rc.local
 
 	log_info "Updating shadow.."
 	[ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow || cp $CONFIG_DIR/shadow /etc/shadow 
@@ -223,7 +220,7 @@ case $1 in
 
 	start)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		mount_config 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
@@ -234,7 +231,7 @@ case $1 in
 
 	daemon)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		mount_config 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		run_rcloal 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
@@ -242,7 +239,7 @@ case $1 in
 
 	restart)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		mount_config 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
@@ -259,7 +256,7 @@ case $1 in
 
 	*)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		mount_config 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;

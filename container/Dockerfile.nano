@@ -82,7 +82,7 @@ FROM alpine:latest
 
 LABEL maintainer='lisaac <lisaac.cn@gmail.com>'
 
-ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d/config' INTERNAL_PLUGIN_DIR='/internal/plugin' TZ='Asia/Shanghai' LUCI_SYSROOT='/tmp/.luci' 
+ENV PLUGIN_DIR='/external/plugin' CONFIG_DIR='/external/cfg.d' INTERNAL_PLUGIN_DIR='/internal/plugin' TZ='Asia/Shanghai' LUCI_SYSROOT='/tmp/.luci' 
 ENV IPKG_INSTROOT=$LUCI_SYSROOT LD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$LD_LIBRARY_PATH PATH=$LUCI_SYSROOT/bin:$LUCI_SYSROOT/sbin:$LUCI_SYSROOT/usr/sbin:$LUCI_SYSROOT/usr/bin:$PATH LUA_PATH=$LUCI_SYSROOT/usr/lib/lua/?.lua;$LUCI_SYSROOT/usr/lib/lua/?/init.lua;; LUA_CPATH=$LUCI_SYSROOT/usr/lib/lua/?.so;; DYLD_LIBRARY_PATH=$LUCI_SYSROOT/usr/lib:$DYLD_LIBRARY_PATH
 
 COPY init.sh /
@@ -91,7 +91,7 @@ COPY --from=compile_stage /tmp/internal $INTERNAL_PLUGIN_DIR/000luci/
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk --no-cache update && \
     apk --no-cache add lua5.1 json-c libgcc tzdata ca-certificates tini && \
-    mkdir -p $INTERNAL_PLUGIN_DIR $PLUGIN_DIR $CONFIG_DIR && \
+    mkdir -p $INTERNAL_PLUGIN_DIR $PLUGIN_DIR $CONFIG_DIR/config && \
     ln -s /usr/lib/liblua.so.5 /usr/lib/liblua.so.5.1.5 && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     chmod +x /init.sh
