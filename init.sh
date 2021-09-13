@@ -134,7 +134,7 @@ merge_luci_root() {
 	ln -sf $LUCI_SYSROOT/etc/rc.common /etc/rc.common
 
 	log_info "Linking /www.."
-	rm /www
+	rm -fr /www 2&>/dev/null
 	ln -sf $LUCI_SYSROOT/www /www
 
 	log_info "Creating nobody session.."
@@ -154,7 +154,7 @@ start_uhttpd() {
 
 link_config() {
 	log_info "Linking config.."
-	rm $UCI_CONFIG_DIR
+	rm -fr $UCI_CONFIG_DIR 2&>/dev/null
 	mkdir -p $CONFIG_DIR/config
 	ln -sf $CONFIG_DIR/config $UCI_CONFIG_DIR
 
