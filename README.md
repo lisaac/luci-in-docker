@@ -52,7 +52,7 @@ docker run -d \
 /
   |- external         # 外部目录，需要外部挂载
     |-cfg.d
-      |-config        # UCI cofnig 目录，用于存放配置文件，启动后挂载至/etc/config
+      |-config        # UCI cofnig 目录，用于存放配置文件，启动后 link 至/etc/config
     |-plugin          # 插件目录
       |-luci-app-diskman    # 插件，会忽略以 _ 开头的目录，方便调试，插件结构如下：
         |-Makefile    # 判定有效插件目录标志
@@ -62,7 +62,7 @@ docker run -d \
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
         |-preinst     # 插件所需的初始化脚本(合并前)
-        |-postinst    # 插件所需的初始化脚本(合并后)
+        |-postinst    # 插件所需的初始化脚本(合并后), 若没有此脚本, 会尝试执行 /root/etc/uci-defaults/ 下的插件初始化脚本
       |-...
   |- internal         # 内部 luci-in-docker 自带插件目录(用户无需关心)
     |-plugin          # 内部插件目录
