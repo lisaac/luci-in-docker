@@ -93,7 +93,17 @@ merge() {
 		[ -n "$need_install" ] && log_info "\tInstalling depends: $need_install .." && apk add $need_install
 	}
 	# 执行 postinst
-	[ -f "$src/postinst" ] && log_info "\tExecuting postinst.."	&& chmod +x $src/postinst && $src/postinst
+	[ -f "$src/postinst" ] && {
+		log_info "\tExecuting postinst.."	&& chmod +x $src/postinst && $src/postinst
+	} || {
+		# 如果没有 postinst 尝试执行 uci-defaults
+		[ -d $src/root/etc/uci-defaults/ ] && {
+			for script in $src/root/etc/uci-defaults/*
+			do 
+				log_info "\tExecuting uci-defaults script.." && chmod +x $script && $script
+			done
+		}
+	}
 }
 
 merge_plugins() {

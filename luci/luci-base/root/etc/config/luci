@@ -41,7 +41,6 @@ config internal 'ccache'
 
 config internal 'themes'
   option Bootstrap '/luci-static/bootstrap'
-  option Openwrt2020 '/luci-static/openwrt2020'
 
 config internal apply
 	option rollback 90
