@@ -28,6 +28,13 @@ local fubus_system = {
 			}
 		end
 	},
+	hostname = {
+		args = {hostname = ""},
+		call = function(args)
+			local sys = require 'luci.sys'
+			return sys.hostname(args.hostname)
+		end
+	},
 	info = {
 		args = {},
 		call = function(args)

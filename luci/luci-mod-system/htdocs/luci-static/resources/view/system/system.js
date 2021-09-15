@@ -6,7 +6,7 @@
 'require rpc';
 'require form';
 
-var callInitList, callInitAction, callTimezone,
+var callInitList, callInitAction, callTimezone, setHostname,
     callGetLocaltime, callSetLocaltime, CBILocalTime;
 
 callInitList = rpc.declare({
@@ -45,6 +45,12 @@ callTimezone = rpc.declare({
 	object: 'luci',
 	method: 'getTimezones',
 	expect: { '': {} }
+});
+
+setHostname = rpc.declare({
+	object: 'system',
+	method: 'hostname',
+	params: [ 'hostname' ]
 });
 
 CBILocalTime = form.DummyValue.extend({
@@ -120,6 +126,14 @@ return view.extend({
 
 		o = s.taboption('general', form.Value, 'hostname', _('Hostname'));
 		o.datatype = 'hostname';
+		o.write = function(section_id, formvalue){
+			setHostname(formvalue)
+			return this.map.data.set(
+				this.uciconfig || this.section.uciconfig || this.map.config,
+				this.ucisection || section_id,
+				this.ucioption || this.option,
+				formvalue);
+		}
 
 		/* could be used also as a default for LLDP, SNMP "system description" in the future */
 		o = s.taboption('general', form.Value, 'description', _('Description'), _('An optional, short description for this device'));
@@ -136,73 +150,11 @@ return view.extend({
 			o.value(zones[i]);
 
 		o.write = function(section_id, formvalue) {
+
 			var tz = timezones[formvalue] ? timezones[formvalue].tzstring : null;
 			uci.set('system', section_id, 'zonename', formvalue);
 			uci.set('system', section_id, 'timezone', tz);
 		};
-
-		/*
-		 * Logging
-		 
-
-		o = s.taboption('logging', form.Value, 'log_size', _('System log buffer size'), "kiB")
-		o.optional    = true
-		o.placeholder = 16
-		o.datatype    = 'uinteger'
-
-		o = s.taboption('logging', form.Value, 'log_ip', _('External system log server'))
-		o.optional    = true
-		o.placeholder = '0.0.0.0'
-		o.datatype    = 'host'
-
-		o = s.taboption('logging', form.Value, 'log_port', _('External system log server port'))
-		o.optional    = true
-		o.placeholder = 514
-		o.datatype    = 'port'
-
-		o = s.taboption('logging', form.ListValue, 'log_proto', _('External system log server protocol'))
-		o.value('udp', 'UDP')
-		o.value('tcp', 'TCP')
-
-		o = s.taboption('logging', form.Value, 'log_file', _('Write system log to file'))
-		o.optional    = true
-		o.placeholder = '/tmp/system.log'
-
-		o = s.taboption('logging', form.ListValue, 'conloglevel', _('Log output level'))
-		o.value(8, _('Debug'))
-		o.value(7, _('Info'))
-		o.value(6, _('Notice'))
-		o.value(5, _('Warning'))
-		o.value(4, _('Error'))
-		o.value(3, _('Critical'))
-		o.value(2, _('Alert'))
-		o.value(1, _('Emergency'))
-
-		o = s.taboption('logging', form.ListValue, 'cronloglevel', _('Cron Log Level'))
-		o.default = 8
-		o.value(5, _('Debug'))
-		o.value(8, _('Normal'))
-		o.value(9, _('Warning'))
-		*/
-		/*
-		 * Zram Properties
-		 */
-
-		if (L.hasSystemFeature('zram')) {
-			s.tab('zram', _('ZRam Settings'));
-
-			o = s.taboption('zram', form.Value, 'zram_size_mb', _('ZRam Size'), _('Size of the ZRam device in megabytes'));
-			o.optional    = true;
-			o.placeholder = 16;
-			o.datatype    = 'uinteger';
-
-			o = s.taboption('zram', form.ListValue, 'zram_comp_algo', _('ZRam Compression Algorithm'));
-			o.optional    = true;
-			o.default     = 'lzo';
-			o.value('lzo', 'lzo');
-			o.value('lz4', 'lz4');
-			o.value('zstd', 'zstd');
-		}
 
 		/*
 		 * Language & Style
@@ -229,59 +181,6 @@ return view.extend({
 			if (k[i].charAt(0) != '.')
 				o.value(uci.get('luci', 'themes', k[i]), k[i]);
 
-		/*
-		 * NTP
-		 
-
-		if (L.hasSystemFeature('sysntpd')) {
-			var default_servers = [
-				'0.openwrt.pool.ntp.org', '1.openwrt.pool.ntp.org',
-				'2.openwrt.pool.ntp.org', '3.openwrt.pool.ntp.org'
-			];
-
-			o = s.taboption('timesync', form.Flag, 'enabled', _('Enable NTP client'));
-			o.rmempty = false;
-			o.ucisection = 'ntp';
-			o.default = o.disabled;
-			o.write = function(section_id, value) {
-				ntpd_enabled = +value;
-
-				if (ntpd_enabled && !uci.get('system', 'ntp')) {
-					uci.add('system', 'timeserver', 'ntp');
-					uci.set('system', 'ntp', 'server', default_servers);
-				}
-
-				if (!ntpd_enabled)
-					uci.set('system', 'ntp', 'enabled', 0);
-				else
-					uci.unset('system', 'ntp', 'enabled');
-
-				return callInitAction('sysntpd', 'enable');
-			};
-			o.load = function(section_id) {
-				return (ntpd_enabled == 1 &&
-				        uci.get('system', 'ntp') != null &&
-				        uci.get('system', 'ntp', 'enabled') != 0) ? '1' : '0';
-			};
-
-			o = s.taboption('timesync', form.Flag, 'enable_server', _('Provide NTP server'));
-			o.ucisection = 'ntp';
-			o.depends('enabled', '1');
-
-			o = s.taboption('timesync', form.Flag, 'use_dhcp', _('Use DHCP advertised servers'));
-			o.ucisection = 'ntp';
-			o.default = o.enabled;
-			o.depends('enabled', '1');
-
-			o = s.taboption('timesync', form.DynamicList, 'server', _('NTP server candidates'));
-			o.datatype = 'host(0)';
-			o.ucisection = 'ntp';
-			o.depends('enabled', '1');
-			o.load = function(section_id) {
-				return uci.get('system', 'ntp', 'server');
-			};
-		}
-		*/
 		return m.render().then(function(mapEl) {
 			poll.add(function() {
 				return callGetLocaltime().then(function(t) {
