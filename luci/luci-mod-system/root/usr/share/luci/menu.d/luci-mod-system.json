@@ -34,6 +34,18 @@
 		}
 	},
 
+	"admin/system/startup": {
+		"title": "Scheduled Tasks / Startup",
+		"order": 45,
+		"action": {
+			"type": "view",
+			"path": "system/startup"
+		},
+		"depends": {
+			"acl": [ "luci-mod-system-init" ]
+		}
+	},
+
 	"admin/system/reboot": {
 		"title": "Reboot",
 		"order": 90,
@@ -45,4 +57,5 @@
 			"acl": [ "luci-mod-system-reboot" ]
 		}
 	}
+
 }

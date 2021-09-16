@@ -6616,6 +6616,11 @@ msgstr "正在启动无线扫描…"
 msgid "Startup"
 msgstr "启动项"
 
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/startup.js:41
+#: modules/luci-mod-system/root/usr/share/luci/menu.d/luci-mod-system.json:39
+msgid "Scheduled Tasks / Startup"
+msgstr "计划任务/启动项"
+
 #: modules/luci-mod-network/htdocs/luci-static/resources/view/network/routes.js:19
 msgid "Static IPv4 Routes"
 msgstr "静态 IPv4 路由"

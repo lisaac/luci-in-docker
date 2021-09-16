@@ -10,9 +10,7 @@
 	local disp = require "luci.dispatcher"
 	local ver  = require "luci.version"
 
-	local boardinfo = {
-		hostname = sys.hostname()
-	 }
+	local boardinfo = util.ubus("system", "board")
 
 	local node = disp.context.dispatched
 	local path = table.concat(disp.context.path, "-")

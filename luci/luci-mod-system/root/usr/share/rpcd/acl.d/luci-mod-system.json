@@ -44,6 +44,7 @@
 		"description": "Grant access to startup configuration",
 		"read": {
 			"file": {
+				"/etc/crontabs/root": [ "read" ],
 				"/etc/rc.local": [ "read" ]
 			},
 			"ubus": {
@@ -53,7 +54,9 @@
 		},
 		"write": {
 			"file": {
-				"/etc/rc.local": [ "write" ]
+				"/etc/rc.local": [ "write" ],
+				"/etc/crontabs/root": [ "write" ],
+				"/etc/init.d/cron reload": [ "exec" ]
 			},
 			"ubus": {
 				"file": [ "write" ],

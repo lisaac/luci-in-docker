@@ -155,6 +155,9 @@ merge_luci_root() {
 }
 
 start_uhttpd() {
+	log_info "Starting crond.."
+	kill -9 $(pidof crond) &> /dev/null
+ 	crond
 	log_info "Starting uhttpd.."
 	kill -9 $(pidof uhttpd) &> /dev/null
 	rm -fr /tmp/luci-modulecache &> /dev/null
@@ -176,7 +179,10 @@ link_config() {
 	[ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow || cp $CONFIG_DIR/shadow /etc/shadow 
 }
 
-run_rcloal() {
+run_rclocal() {
+	log_info "Handle Hostname.."
+	hostname=$(uci get system.@system[0].hostname)
+	echo "$hostname" > /proc/sys/kernel/hostname
 	log_info "Executing rc.local.."
 	chmod +x /etc/rc.local
 	/etc/rc.local
@@ -230,8 +236,8 @@ case $1 in
 
 	start)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 
@@ -241,16 +247,16 @@ case $1 in
 
 	daemon)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
-		run_rcloal 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
+		run_rclocal 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		tail -f /dev/null;;
 
 	restart)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 
@@ -266,8 +272,8 @@ case $1 in
 
 	*)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		link_config 2>&1 | tee -a /tmp/daemon.log
 		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
+		link_config 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 esac

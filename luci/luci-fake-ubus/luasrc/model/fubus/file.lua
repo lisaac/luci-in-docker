@@ -33,7 +33,7 @@ local fubus_file = {
 				else
 					f = io.open(args.path, "w+")
 				end
-				f:write(data)
+				f:write(args.data)
 				f:close()
 			end
 		end
