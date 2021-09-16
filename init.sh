@@ -175,6 +175,12 @@ link_config() {
 	[ ! -f "$CONFIG_DIR/rc.local" ] && touch $CONFIG_DIR/rc.local
 	ln -sf $CONFIG_DIR/rc.local /etc/rc.local
 
+	log_info "Linking crontab.."
+	[ ! -f "$CONFIG_DIR/crontab" ] && {
+		[ -f /etc/crontabs/root ] && mv /etc/crontabs/root $CONFIG_DIR/crontab || touch $CONFIG_DIR/crontab
+	}
+	ln -sf $CONFIG_DIR/crontab /etc/crontabs/root
+
 	log_info "Updating shadow.."
 	[ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow || cp $CONFIG_DIR/shadow /etc/shadow 
 }
