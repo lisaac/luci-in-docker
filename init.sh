@@ -177,9 +177,19 @@ link_config() {
 
 	log_info "Linking crontab.."
 	[ ! -f "$CONFIG_DIR/crontab" ] && {
-		[ -f /etc/crontabs/root ] && mv /etc/crontabs/root $CONFIG_DIR/crontab || touch $CONFIG_DIR/crontab
+		[ -f /etc/crontabs/root -a ! -L /etc/crontabs/root ] && mv /etc/crontabs/root $CONFIG_DIR/crontab || touch $CONFIG_DIR/crontab
+	} || {
+		[ ! -L /etc/crontabs/root ] && mv /etc/crontabs/root /etc/crontabs/root.bak
 	}
 	ln -sf $CONFIG_DIR/crontab /etc/crontabs/root
+
+	[ ! -d "$CONFIG_DIR/periodic" ] && {
+		[ -d /etc/periodic ] && mv /etc/periodic $CONFIG_DIR/periodic || mkdir -p $CONFIG_DIR/periodic
+	} || {
+		[ ! -L /etc/periodic ] && mv /etc/periodic /etc/periodic.bak
+	}
+	ln -sf $CONFIG_DIR/periodic /etc/periodic
+
 
 	log_info "Updating shadow.."
 	[ ! -f "$CONFIG_DIR/shadow" ] && cp /etc/shadow $CONFIG_DIR/shadow || cp $CONFIG_DIR/shadow /etc/shadow 

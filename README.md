@@ -53,6 +53,10 @@ docker run -d \
   |- external         # 外部目录，需要外部挂载
     |-cfg.d
       |-config        # UCI cofnig 目录，用于存放配置文件，启动后 link 至/etc/config
+      |-crontab       # crontab
+      |-periodic      # crond 定期执行目录
+      |-rc.local      # rc.local 本地启动执行脚本
+      |-shadow        # 密码保存
     |-plugin          # 插件目录
       |-luci-app-diskman    # 插件，会忽略以 _ 开头的目录，方便调试，插件结构如下：
         |-Makefile    # 判定有效插件目录标志
