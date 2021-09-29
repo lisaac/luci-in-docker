@@ -252,8 +252,8 @@ case $1 in
 
 	start)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		link_config 2>&1 | tee -a /tmp/daemon.log
+		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 
@@ -263,16 +263,16 @@ case $1 in
 
 	daemon)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		link_config 2>&1 | tee -a /tmp/daemon.log
+		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		run_rclocal 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		tail -f /dev/null;;
 
 	restart)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		link_config 2>&1 | tee -a /tmp/daemon.log
+		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 
@@ -288,8 +288,8 @@ case $1 in
 
 	*)
 		init_env 2>&1 | tee -a /tmp/daemon.log
-		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		link_config 2>&1 | tee -a /tmp/daemon.log
+		merge_luci_root 2>&1 | tee -a /tmp/daemon.log
 		start_uhttpd 2>&1 | tee -a /tmp/daemon.log &
 		;;
 esac
