@@ -26,7 +26,7 @@ var CBIJSONConfig = baseclass.extend({
 		for (var sectiontype in data) {
 			if (!data.hasOwnProperty(sectiontype))
 				continue;
-
+				num_sections = 0
 			if (Array.isArray(data[sectiontype])) {
 				for (var i = 0, index = 0; i < data[sectiontype].length; i++) {
 					var item = data[sectiontype][i],
@@ -77,8 +77,8 @@ var CBIJSONConfig = baseclass.extend({
 			return (a > b);
 		}, this));
 
-		for (var i = 0; i < section_ids.length; i++)
-			this.data[section_ids[i]]['.index'] = i;
+		// for (var i = 0; i < section_ids.length; i++)
+		// 	this.data[section_ids[i]]['.index'] = i;
 	},
 
 	load: function() {

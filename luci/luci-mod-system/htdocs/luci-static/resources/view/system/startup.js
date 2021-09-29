@@ -8,12 +8,10 @@ var isReadonlyView = !L.hasViewPermission() || null;
 
 return view.extend({
 	load: function () {
-		return Promise.all(
-			[
-				L.resolveDefault(fs.read('/etc/crontabs/root'), ''),
-				L.resolveDefault(fs.read('/etc/rc.local'), '')
-			]
-		)
+		return Promise.all([
+			L.resolveDefault(fs.read('/etc/crontabs/root'), ''),
+			L.resolveDefault(fs.read('/etc/rc.local'), '')
+		])
 	},
 
 	handleRcLocalSave: function (ev) {
