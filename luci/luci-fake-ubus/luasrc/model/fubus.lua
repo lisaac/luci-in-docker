@@ -78,9 +78,8 @@ fubus.fake = function(method, obj, func, args)
 			-- local args = parseInput()
 			local f = validateArgs(obj, func, args)
 			if f and f.call and type(f.call) == "function" then
-				local result,	code = f.call(args)
 				-- return (json.stringify(result):gsub("^%[%]$", "{}"))
-				return result
+				return f.call(args)
 			else
 				return f
 			end

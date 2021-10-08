@@ -90,11 +90,12 @@ local fubus_file = {
 		args = {command = "", params = {}, env = {}},
 		call = function(args)
 			if args.command and args.command ~= "" then
-				if type(params) == "table" then
+				if type(args.params) == "table" then
 					local p = table.concat(args.params, " ")
-					return luci.util.exec(args.command .. " " .. p)
+					-- fix for rpcErrors
+					return nil, os.execute(args.command .. " " .. p)
 				else
-					return luci.util.exec(args.command)
+					return nil, os.execute(args.command)
 				end
 			end
 		end

@@ -62,7 +62,7 @@ docker run -d \
         |-Makefile    # 判定有效插件目录标志
         |-root        # 插件所需的 root 目录，合并至/tmp/.luci/
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
-        |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
+        |-htdocs       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
         |-preinst     # 插件所需的初始化脚本(合并前)
@@ -74,7 +74,7 @@ docker run -d \
         |-Makefile    # 判定有效插件目录标志
         |-root        # 插件所需的 root 目录，合并至/tmp/.luci/
         |-luasrc      # 插件所需的 lua 文件目录，合并至/tmp/.luci/usr/lib/lua/luci
-        |-htdoc       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
+        |-htdocs       # 插件所需的 html 文件目录，合并至/tmp/.luci/www
         |-po          # 插件所需的 po 文件目录
         |-depends.lst # 插件所需要 alpine 依赖列表文件, 依赖用' '隔开, 只用来存放 alpine 依赖
         |-preinst     # 插件所需的初始化脚本(合并前)

@@ -272,7 +272,7 @@ var FileSystem = baseclass.extend(/** @lends LuCI.fs.prototype */ {
 		if (!L.isObject(env))
 			env = null;
 
-		return callFileExec(command, params, env).then(handleRpcReply.bind(this, { '': {} }));
+		return callFileExec(command, params, env).then(handleRpcReply.bind(this, {}));
 	},
 
 	/**

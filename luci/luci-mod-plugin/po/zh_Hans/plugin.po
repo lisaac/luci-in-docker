@@ -1,0 +1,55 @@
+#
+# lisaac <lisaac.cn@gmail.com>, 2021
+#
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2021-07-22 08:04+0000\n"
+"Last-Translator: Eric <spice2wolf@gmail.com>\n"
+"Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
+"openwrt/luci/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.7.2-dev\n"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:90
+msgid "Rename Plugin:"
+msgstr "重命名插件："
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:178
+msgid "Plugins"
+msgstr "插件"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:182
+msgid "Merge Priority"
+msgstr "合并优先级"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:183
+msgid "Plugin"
+msgstr "插件"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:233
+msgid "Plugin Repo"
+msgstr "插件仓库"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:230
+msgid "Repo"
+msgstr "仓库"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:250
+msgid "already exist!!"
+msgstr "已经存在！！"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:260
+msgid "Failed to clone plugin"
+msgstr "插件克隆失败"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:272
+msgid "New Plugin"
+msgstr "新插件"
+
+#: modules/luci-mod-system/htdocs/luci-static/resources/view/system/plugin.js:273
+msgid "Cloning new plugin ..."
+msgstr "新插件克隆中.."
+
