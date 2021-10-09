@@ -230,10 +230,8 @@ return view.extend({
 			ss.tab('repo', _('Repo'));
 			ss.tab('zip', _('ZIP'));
 			o = ss.taboption('repo', form.Value, 'repo', _("Plugin Repo"))
-			o.placeholder = 'https://github.com/lisaac/luci-app-dockerman'
+			o.placeholder = 'https://github.com/lisaac/luci-app-diskman'
 			o.width = 1000
-			o.value("https://github.com/lisaac/luci-app-diskman", _("Diskman"))
-			o.value("https://github.com/lisaac/luci-app-dockerman", _("Dockerman"))
 			o.write = function (sid, value) {
 				if (value.match(/(ht|f)tp(s?)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&amp;%$#_]*)?/)) {
 					const pluginName = value.substring(value.lastIndexOf('/') + 1)
