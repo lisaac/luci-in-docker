@@ -110,7 +110,7 @@ var CBIJSONConfig = baseclass.extend({
 		return null;
 	},
 
-	set: function(config, section, option, value) {
+	set: function(config, section, option, value, DATATYPE) {
 		if (section == null || option == null || option.charAt(0) == '.')
 			return;
 
@@ -121,8 +121,20 @@ var CBIJSONConfig = baseclass.extend({
 			delete this.data[section][option];
 		else if (Array.isArray(value))
 			this.data[section][option] = value;
-		else
-			this.data[section][option] = String(value);
+		else{
+			switch(DATATYPE){
+				case "number":
+					this.data[section][option] = Number(value);
+					break;
+				case "boolean":
+					this.data[section][option] = Boolean(value);
+					break;
+				default:
+					this.data[section][option] = String(value);
+					break;
+			}
+
+		}
 	},
 
 	unset: function(config, section, option) {
@@ -2016,7 +2028,8 @@ var CBIAbstractValue = CBIAbstractElement.extend(/** @lends LuCI.form.AbstractVa
 			this.uciconfig || this.section.uciconfig || this.map.config,
 			this.ucisection || section_id,
 			this.ucioption || this.option,
-			formvalue);
+			formvalue,
+			this.DATATYPE);
 	},
 
 	/**
