@@ -1264,6 +1264,7 @@ var CBIAbstractSection = CBIAbstractElement.extend(/** @lends LuCI.form.Abstract
 
 		for (var i = 0, sid = sids[0]; (sid = sids[i]) != null; i++) {
 			for (var j = 0, o = this.children[0]; (o = this.children[j]) != null; j++) {
+				if (o.deps.length > 0) {
 					var isActive = o.isActive(sid),
 						isSatisified = o.checkDepends(sid);
 
@@ -1275,6 +1276,7 @@ var CBIAbstractSection = CBIAbstractElement.extend(/** @lends LuCI.form.Abstract
 
 					if (!n && isActive)
 						o.triggerValidation(sid);
+				}
 			}
 		}
 
