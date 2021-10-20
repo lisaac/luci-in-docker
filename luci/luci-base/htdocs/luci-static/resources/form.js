@@ -89,7 +89,7 @@ var CBIJSONConfig = baseclass.extend({
 		return Promise.resolve();
 	},
 
-	get: function(config, section, option) {
+	get: function(config, section, option, DATATYPE) {
 		if (section == null)
 			return null;
 
@@ -104,8 +104,16 @@ var CBIJSONConfig = baseclass.extend({
 		if (Array.isArray(value))
 			return value;
 
-		if (value != null)
-			return String(value);
+		if (value != null){
+			switch(DATATYPE){
+				case "number":
+					return Number(value);
+				case "boolean":
+					return Boolean(value);
+				default:
+					return String(value);
+			}
+		}
 
 		return null;
 	},
@@ -1256,17 +1264,17 @@ var CBIAbstractSection = CBIAbstractElement.extend(/** @lends LuCI.form.Abstract
 
 		for (var i = 0, sid = sids[0]; (sid = sids[i]) != null; i++) {
 			for (var j = 0, o = this.children[0]; (o = this.children[j]) != null; j++) {
-				var isActive = o.isActive(sid),
-				    isSatisified = o.checkDepends(sid);
+					var isActive = o.isActive(sid),
+						isSatisified = o.checkDepends(sid);
 
-				if (isActive != isSatisified) {
-					o.setActive(sid, !isActive);
-					isActive = !isActive;
-					changed = true;
-				}
+					if (isActive != isSatisified) {
+						o.setActive(sid, !isActive);
+						isActive = !isActive;
+						changed = true;
+					}
 
-				if (!n && isActive)
-					o.triggerValidation(sid);
+					if (!n && isActive)
+						o.triggerValidation(sid);
 			}
 		}
 
@@ -1777,7 +1785,8 @@ var CBIAbstractValue = CBIAbstractElement.extend(/** @lends LuCI.form.AbstractVa
 		return this.map.data.get(
 			this.uciconfig || this.section.uciconfig || this.map.config,
 			this.ucisection || section_id,
-			this.ucioption || this.option);
+			this.ucioption || this.option,
+			this.DATATYPE);
 	},
 
 	/**
