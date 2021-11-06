@@ -728,7 +728,8 @@ var CBIMap = CBIAbstractElement.extend(/** @lends LuCI.form.Map.prototype */ {
 			id = 'cbid.%s.%s.%s'.format(config_name || this.config, section_id, name);
 
 		elem = this.findElement('data-field', id);
-		sid  = elem ? id.split(/\./)[2] : null;
+		// sid  = elem ? id.split(/\./)[2] : null;
+		sid  = elem ? section_id : null;
 		inst = elem ? dom.findClassInstance(elem) : null;
 
 		return (inst instanceof CBIAbstractValue) ? [ inst, sid ] : null;
