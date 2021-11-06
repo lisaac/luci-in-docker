@@ -1,0 +1,186 @@
+#!/usr/bin/lua
+--[[
+LuCI - Lua socket forwarder
+Copyright 2021 lisaac <https://github.com/lisaac/luci-in-docker>
+USEAGE: uhttpd startup with parameters "-l /socketforwarder -L /www/cgi-bin/socket_forwarder"
+				send request with header: "socket_path: /var/run/docker.sock"
+				sysauth supported
+]]--
+require "nixio.util"
+local ltn12 = require "luci.ltn12"
+
+local open_socket = function (socket_path)
+	local nixio = require "nixio"
+	local socket = nixio.socket("unix", "stream")
+	if socket:connect(socket_path) ~= true then return nil end
+	return socket
+end
+
+local function limitsource(handle, limit)
+	limit = limit or 0
+	local BLOCKSIZE = ltn12.BLOCKSIZE
+
+	return function()
+		if limit < 1 then
+			handle:close()
+			return nil
+		else
+			local read = (limit > BLOCKSIZE) and BLOCKSIZE or limit
+			limit = limit - read
+
+			local chunk = handle:read(read)
+			if not chunk then handle:close() end
+			return chunk
+		end
+	end
+end
+
+local chunksource = function(sock, buffer)
+	buffer = buffer or ""
+	return function()
+		local output
+		local _, endp, count = buffer:find("^([0-9a-fA-F]+)\r\n")
+		while not count do
+			local newblock, code = sock:recv(1024)
+			if not newblock then return nil, code end
+			buffer = buffer .. newblock
+			_, endp, count = buffer:find("^([0-9a-fA-F]+)\r\n")
+		end
+		count = tonumber(count, 16)
+		if not count then
+			return nil, -1, "invalid encoding"
+		elseif count == 0 then -- finial
+			return nil
+		elseif count <= #buffer - endp then
+			--data >= count
+			output = buffer:sub(endp + 1, endp + count)
+			if count == #buffer - endp then					-- [data]
+				buffer = buffer:sub(endp + count + 1)
+				count, code = sock:recvall(2) --read \r\n
+				if not count then return nil, code end
+			elseif count + 1 == #buffer - endp then	-- [data]\r
+				buffer = buffer:sub(endp + count + 2)
+				count, code = sock:recvall(1) --read \n
+				if not count then return nil, code end
+			else																		 -- [data]\r\n[count]\r\n[data]...
+				buffer = buffer:sub(endp + count + 3) -- cut buffer
+			end
+			return output
+		else
+			-- data < count
+			output = buffer:sub(endp + 1, endp + count)
+			buffer = buffer:sub(endp + count + 1)
+			local remain, code = sock:recvall(count - #output) --need read remaining
+			if not remain then return nil, code end
+			output = output .. remain
+			count, code = sock:recvall(2) --read \r\n
+			if not count then return nil, code end
+			return output
+		end
+	end
+end
+
+local chunksink = function (sock)
+	return function(chunk, err)
+		if not chunk then
+			return sock:writeall("0\r\n\r\n")
+		else
+			return sock:writeall(("%X\r\n%s\r\n"):format(#chunk, tostring(chunk)))
+		end
+	end
+end
+
+local socketsink = function (sock)
+	return function(chunk, err)
+			if not chunk then
+				return sock:writeall("\r\n\r\n")
+			else return sock:writeall(chunk) end
+	end
+end
+
+local handle_socket = function(env)
+	local k, v
+	local socket = open_socket(env.headers.socket_path)
+	local headers = env.REQUEST_METHOD .. " " .. env.PATH_INFO .. (env.QUERY_STRING and ("?" .. env.QUERY_STRING) or "").. ' HTTP/1.1\r\n' 
+							.. "Host: localhsot \r\n"
+	env.headers.accept = nil
+	env.headers.host = nil
+	env.headers['user-agent'] = 'LuCI'
+	env.headers['URL'] = nil
+	for k, v in pairs(env.headers) do
+		headers = headers .. k .. ": " .. v .. "\r\n"
+	end
+	headers = headers .. '\r\n'
+	-- send headers
+	socket:send(headers)
+	-- send body
+	ltn12.pump.all(limitsource(io.stdin, tonumber(env.CONTENT_LENGTH)), socketsink(socket))
+
+	local linesrc = socket:linesource()
+	uhttpd.send("Status: " .. linesrc():match('.-%s+(.+)') .. '\r\n')
+	local line = linesrc()
+	-- uhttpd.send('\r\n')
+	-- uhttpd.send(headers)
+
+	local res_headers = {}
+	-- recive headers
+	while line and line ~= "" do
+		local key, val = line:match("^([%w-]+)%s?:%s?(.*)")
+		if key and key ~= "Status" then
+			if type(res_headers[key]) == "string" then
+				res_headers[key] = {res_headers[key], val}
+			elseif type(res_headers[key]) == "table" then
+				res_headers[key][#res_headers[key] + 1] = val
+			else
+				res_headers[key] = val
+			end
+		end
+
+		line = linesrc()
+	end
+	-- response headers
+	for k, v in pairs(res_headers) do
+		if k:lower() ~= 'transfer-encoding' and k:lower() ~= 'socket_path' and k:lower() ~= 'cookie' then
+			uhttpd.send(k.. ": ".. v .. '\r\n')
+		end
+	end
+	uhttpd.send('\r\n')
+	-- response body
+	local body_buffer = linesrc(true)
+	local body_source
+	if (res_headers['Transfer-Encoding'] == 'chunked') then
+		body_source = chunksource(socket, body_buffer)
+	else
+		body_source = ltn12.source.cat(ltn12.source.string(body_buffer), socket:blocksource())
+	end
+	ltn12.pump.all(body_source, (ltn12.sink.file(io.stdout)))
+	socket:close()
+end
+
+local check_authentication = function (sid)
+	local sauth = require "luci.sauth"
+	local res = sauth.access(sid)
+	if res then
+		return true
+	else
+		return false
+	end
+end
+
+function handle_request(env)
+	local cookie = env.headers.Cookie or env.headers.cookie
+	if type(cookie) == 'string' then
+		local sid = cookie:match('sysauth=(.+)')
+		if (check_authentication(sid)) then
+			if not env.headers.socket_path then
+				uhttpd.send("Status: 404 NOT FOUND SOCKET\r\n\r\n")
+			else
+				handle_socket(env)
+			end
+		else
+			uhttpd.send("Status: 403 Forbidden\r\n\r\n")
+		end
+	else
+		uhttpd.send("Status: 403 Forbidden\r\n\r\n")
+	end
+end

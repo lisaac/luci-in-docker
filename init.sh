@@ -162,7 +162,7 @@ start_uhttpd() {
 	kill -9 $(pidof uhttpd) &> /dev/null
 	rm -fr /tmp/luci-modulecache &> /dev/null
 	rm -fr /tmp/luci-indexcache* &> /dev/null
-	$LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -h $LUCI_SYSROOT/www -f &
+	$LUCI_SYSROOT/usr/sbin/uhttpd -p 80 -t 1200 -l /socket -L /$LUCI_SYSROOT/www/cgi-bin/socket_forwarder -h $LUCI_SYSROOT/www -f &
 }
 
 link_config() {
