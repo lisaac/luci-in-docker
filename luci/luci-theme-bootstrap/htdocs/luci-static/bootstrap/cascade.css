@@ -731,6 +731,7 @@ textarea[readonly] {
 
 .table .td, .table .th {
 	border-top: 1px solid #ddd;
+	word-break: break-all;
 }
 
 .tr.placeholder {
