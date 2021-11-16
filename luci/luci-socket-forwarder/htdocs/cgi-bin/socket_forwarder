@@ -140,7 +140,8 @@ local handle_socket = function(env)
 	end
 	-- response headers
 	for k, v in pairs(res_headers) do
-		if k:lower() ~= 'transfer-encoding' and k:lower() ~= 'socket_path' and k:lower() ~= 'cookie' then
+		-- uhttpd will add this headers
+		if k:lower() ~= 'transfer-encoding' and k:lower() ~= 'content-length' and k:lower() ~= 'cookie' then
 			uhttpd.send(k.. ": ".. v .. '\r\n')
 		end
 	end
