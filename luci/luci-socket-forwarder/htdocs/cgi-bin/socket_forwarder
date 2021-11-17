@@ -107,6 +107,8 @@ local handle_socket = function(env)
 	env.headers.host = nil
 	env.headers['user-agent'] = 'LuCI'
 	env.headers['URL'] = nil
+	env.headers['Connection'] = nil
+	env.headers['connection'] = 'close'
 	for k, v in pairs(env.headers) do
 		headers = headers .. k .. ": " .. v .. "\r\n"
 	end
