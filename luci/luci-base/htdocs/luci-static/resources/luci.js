@@ -720,19 +720,19 @@
 					}).join('&') : '';
 
 					if (q !== '') {
-						switch (opt.method) {
-						case 'GET':
-						case 'HEAD':
-						case 'OPTIONS':
+						// switch (opt.method) {
+						// case 'GET':
+						// case 'HEAD':
+						// case 'OPTIONS':
 							opt.url += ((/\?/).test(opt.url) ? '&' : '?') + q;
-							break;
+						// 	break;
 
-						default:
-							if (content == null) {
-								content = q;
-								contenttype = 'application/x-www-form-urlencoded';
-							}
-						}
+						// default:
+						// 	if (content == null) {
+						// 		content = q;
+						// 		contenttype = 'application/x-www-form-urlencoded';
+						// 	}
+						// }
 					}
 				}
 
@@ -764,7 +764,7 @@
 				if (opt.content != null) {
 					switch (typeof(opt.content)) {
 					case 'function':
-						content = opt.content(xhr);
+						content = opt.content(opt.xhr);
 						break;
 
 					case 'object':
