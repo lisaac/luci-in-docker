@@ -28,7 +28,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
     cd /tmp/uhttpd && \
     # git checkout 5f9ae5738372aaa3a6be2f0a278933563d3f191a && \
     sed -i 's/clearenv();/\/\/clearenv();/g' cgi.c && \
-    cmake -DUBUS_SUPPORT=OFF . && make && cd /tmp && \
+    cmake -DUBUS_SUPPORT=OFF -DUCODE_SUPPORT=OFF . && make && cd /tmp && \
     # libnl-tiny
     cd /tmp && git clone --depth=1 https://git.openwrt.org/project/libnl-tiny.git && \
     cd /tmp/libnl-tiny && \
