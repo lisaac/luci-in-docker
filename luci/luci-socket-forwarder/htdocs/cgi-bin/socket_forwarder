@@ -173,7 +173,7 @@ end
 function handle_request(env)
 	local cookie = env.headers.Cookie or env.headers.cookie
 	if type(cookie) == 'string' then
-		local sid = cookie:match('sysauth=(.+)')
+		local sid = cookie:match('sysauth=([^;\s]+)')
 		if (check_authentication(sid)) then
 			if not env.headers.socket_path then
 				uhttpd.send("Status: 404 NOT FOUND SOCKET\r\n\r\n")
